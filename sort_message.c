@@ -84,6 +84,8 @@ int main (int argc, char **argv)
     fwrite(&message-> messageID, sizeof(int), 1, ofp);
     fclose(ofp);
   }
+    
+  free(buffer);
 
   return 0;
 }

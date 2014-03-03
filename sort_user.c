@@ -75,6 +75,8 @@ int main (int argc, char **argv)
     fwrite(&user->message_num, sizeof(int), 1, ofp);
     fclose(ofp);
   }
+    
+  free(buffer);
 
   return 0;
 }

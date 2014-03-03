@@ -74,6 +74,8 @@ int main (int argc, char **argv)
     fwrite(location->state, sizeof(char), TEXT_SHORT, ofp);
     fclose(ofp);
   }
+    
+  free(buffer);
 
   return 0;
 }
