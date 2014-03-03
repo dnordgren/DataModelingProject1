@@ -48,7 +48,7 @@ struct timeval time_start, time_end;
   sprintf(filename, "tableinfo.dat");
 
   file = fopen(filename, "rb");
-
+   
   int locationNum, userNum, messageNum;
   fread(&locationNum, sizeof(int), 1, file);
   fread(&userNum, sizeof(int), 1, file);
@@ -67,6 +67,7 @@ struct timeval time_start, time_end;
     user_t *user = read_user(ifp);
     buffer[j] = *user;
     fclose(ifp);
+	free_user(user);
   }
 
   qsort(buffer, userNum, sizeof(user_t), cmp);
@@ -82,16 +83,17 @@ struct timeval time_start, time_end;
     fwrite(&user->message_num, sizeof(int), 1, ofp);
     fclose(ofp);
   }
-
+  
   free(buffer);
 
     /* end time */
     gettimeofday(&time_end, NULL);
-
+    
     float totaltime = (time_end.tv_sec - time_start.tv_sec)
                     + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
     printf("\n\nProcess time %f seconds\n", totaltime);
+    
 
   return 0;
 }

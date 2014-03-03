@@ -104,10 +104,10 @@ int main(int argc, char **argv)
         /* Update ID counters */
         currentUser++;
         currentMessage += rec->message_num;
-        free(rec);
+        free_record(rec);
     }
 
-    //ht_cleanup();
+    ht_cleanup(myHashtable);
 
     sprintf(filename, "tableinfo.dat");
     ofp = fopen(filename, "wb");

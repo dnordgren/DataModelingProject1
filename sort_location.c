@@ -66,6 +66,7 @@ int main (int argc, char **argv)
     location_t *location = read_location(ifp);
     buffer[j] = *location;
     fclose(ifp);
+	free_location(location);
   }
 
   qsort(buffer, locationNum, sizeof(location_t), cmp);
@@ -79,9 +80,8 @@ int main (int argc, char **argv)
     fwrite(location->city, sizeof(char), TEXT_SHORT, ofp);
     fwrite(location->state, sizeof(char), TEXT_SHORT, ofp);
     fclose(ofp);
-  }
     
-  free(buffer);
+  }
 
   free(buffer);
 
