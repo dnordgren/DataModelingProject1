@@ -1,7 +1,8 @@
-#include "message.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/times.h>
+
+#include "message.h"
 
 int comparison;
 
@@ -16,7 +17,11 @@ int cmp(const void *a, const void *b)
       minutes1 = (p1->year * 525949) + (p1->month * 43829) + (p1->day * 1440) + (p1->hour * 60) + p1->minute;
       minutes2 = (p2->year * 525949) + (p2->month * 43829) + (p2->day * 1440) + (p2->hour * 60) + p2->minute;
       return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
-    case 1 : return (p1->hour)>(p2->hour) ? 1 : ( (p1->hour)<(p2->hour) ? -1:0);
+    case 1 : 
+      minutes1 = (p1->hour * 60) + p1->minute;
+      minutes2 = (p2->hour * 60) + p2->minute;
+      return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
+
     case 2 : return (p1->messageID)>(p2->messageID)? 1:( (p1->messageID)<(p2->messageID) ? -1:0 );
     case 3 : return (p1->userID)>(p2->userID)? 1:( (p1->userID)<(p2->userID) ? -1:0 );
   }
@@ -28,7 +33,7 @@ int main (int argc, char **argv)
 {
   /* print usage if needed */
   if (argc != 2) {
-       fprintf(stderr, "Usage: \n0: time\n1: hour\n2: messageID\n3: userID\n");
+       fprintf(stderr, "Usage: \n0: date/time\n1: timeOfDay\n2: messageID\n3: userID\n");
        exit(0);
    }
 
@@ -40,25 +45,30 @@ int main (int argc, char **argv)
     exit(0);
   }
 
-  int i = 0, j, k;
+    struct timeval time_start, time_end;
+
+	/* start time */
+    gettimeofday(&time_start, NULL);
+
+  int j, k;
   char filename[1024];
   FILE *file = NULL;
 
-  sprintf(filename, "message_%07d.dat",i);
-
-  while ((file = fopen(filename, "r")))
-  {
-    fclose(file);
-    i++;
-    sprintf(filename, "message_%07d.dat",i);
-  }
+  sprintf(filename, "tableinfo.dat");
+  file = fopen(filename, "rb");
+   
+  int locationNum, userNum, messageNum;
+  fread(&locationNum, sizeof(int), 1, file);
+  fread(&userNum, sizeof(int), 1, file);
+  fread(&messageNum, sizeof(int), 1, file);
+  fclose(file);
 
   //read files into buffer
-  message_t *buffer = malloc(sizeof(message_t) * i);
+  message_t *buffer = malloc(sizeof(message_t) * messageNum);
 
   FILE *ifp = NULL, *ofp = NULL;
 
-  for (j=0; j < i; j++)
+  for (j=0; j < messageNum; j++)
   {
     sprintf(filename,"message_%07d.dat", j);
     ifp = fopen(filename, "rb");
@@ -67,9 +77,9 @@ int main (int argc, char **argv)
     fclose(ifp);
   }
 
-  qsort(buffer, i, sizeof(message_t), cmp);
+  qsort(buffer, messageNum, sizeof(message_t), cmp);
 
-  for (k=0; k < i; k++)
+  for (k=0; k < messageNum; k++)
   {
     sprintf(filename, "message_%07d.dat",k);
     ofp = fopen(filename, "wb");
@@ -86,6 +96,16 @@ int main (int argc, char **argv)
   }
     
   free(buffer);
+
+  free(buffer);
+
+    /* end time */
+    gettimeofday(&time_end, NULL);
+    
+    float totaltime = (time_end.tv_sec - time_start.tv_sec)
+                    + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
+
+    printf("\n\nProcess time %f seconds\n", totaltime);
 
   return 0;
 }
