@@ -21,7 +21,7 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
   char *stateMidBelow;
   middle = (min + max)/2;
 
-  location_t *location = malloc(sizeof(location_t));
+  location_t *location, *location2;
 
   /* read in current middle to compare to matchstring */
   FILE *ifp = NULL;
@@ -31,8 +31,7 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
   location = read_location(ifp);
   fclose(ifp);
   stateMid = location->state;
-  free(location);
-
+  
    /* catch end-case of mid being first element */
   if (middle == edge)
   {
@@ -47,26 +46,33 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
   }
 
   /* Reallocate memory for temporary location*/
-  location = malloc(sizeof(location_t));
+  //location = malloc(sizeof(location_t));
+  
   sprintf(filename, "location_%06d.dat", middle + direction);
   ifp = fopen(filename, "rb");
-  location = read_location(ifp);
+  location2 = read_location(ifp);
   fclose(ifp);
-  stateMidBelow = location->state;
-  free(location);
-    
+  stateMidBelow = location2->state;
 
-  if(strcmp(matchString, stateMid) < 0 || (direction == -1 && strcmp(matchString, stateMidBelow) == 0))
+
+    if(strcmp(matchString, stateMid) < 0 || (direction == -1 && strcmp(matchString, stateMidBelow) == 0))
   {
-    printf("%s is less than %s or %s is equal to %s 1", matchString, stateMid, matchString, stateMidBelow);
+    //printf("%s is less than %s or %s is equal to %s 1", matchString, stateMid, matchString, stateMidBelow);
+    free_location(location);
+    free_location(location2);
     return findLocationEdge(min, middle - 1, matchString, direction, edge);
   } 
   else if (strcmp(matchString, stateMid) > 0 || (direction == 1 && strcmp(matchString, stateMidBelow) == 0))
   {
+    free_location(location);
+    free_location(location2);
+
     return findLocationEdge(middle + 1, max, matchString, direction, edge);
   }
   else
   {
+    free_location(location);
+    free_location(location2);
     return middle;
   }
 }
@@ -83,7 +89,7 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
   int locBelow;
   middle = (min + max)/2;
 
-  user_t *user = malloc(sizeof(user_t));
+  user_t *user;
 
   /* read in current middle to compare to matchstring */
   FILE *ifp = NULL;
@@ -93,7 +99,7 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
   user = read_user(ifp);
   fclose(ifp);
   locMid = user->locationID;
-  free(user);
+  free_user(user);
 
   /* catch end-case of mid being first element */
   if (middle == edge)
@@ -109,14 +115,13 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
   }
 
   /* Reallocate memory for temporary location*/
-  user = malloc(sizeof(user_t));
+  //user = malloc(sizeof(user_t));
   sprintf(filename, "user_%06d.dat", middle + direction);
   ifp = fopen(filename, "rb");
   user = read_user(ifp);
   fclose(ifp);
   locBelow = user->locationID;
-  free(user);
-    
+  free_user(user);
 
   if(key < locMid || (direction == -1 && key == locBelow))
   {
@@ -165,7 +170,7 @@ int main(int argc, char **argv)
   int nebraskaStart, nebraskaEnd;
   nebraskaStart = findLocationEdge(0, locationNum, matchString, -1, 0);
   nebraskaEnd = findLocationEdge(0, locationNum, matchString, 1, locationNum);
-  printf("NE Start: %d, NE End: %d", nebraskaStart, nebraskaEnd);
+  //printf("NE Start: %d, NE End: %d", nebraskaStart, nebraskaEnd);
 
   for ( i = nebraskaStart; i <= nebraskaEnd; i++) 
   {
@@ -180,14 +185,14 @@ int main(int argc, char **argv)
     }
 
     location_t *loc = read_location(fp);
-    printf("%s, %s\n", loc->city, loc->state);
+    //printf("%s, %s\n", loc->city, loc->state);
     fclose(fp);
 
   	//printf("%s, %s\n", loc->city, loc->state);
   	int locationStart, locationEnd;
   	locationStart = findUserEdge(0, userNum, loc->locationID, -1, 0);
   	locationEnd = findUserEdge(0, userNum, loc->locationID, 1, userNum);
-  	printf("Start: %i, End: %i\n", locationStart, locationEnd);
+  	//printf("Start: %i, End: %i\n", locationStart, locationEnd);
   	matches += (locationEnd - locationStart + 1);
 
     free_location(loc);

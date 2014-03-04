@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/times.h>
+#include <string.h>
 
-#include "user.h"
+#include "location.h"
 
 int comparison;
 
 int cmp(const void *a, const void *b)
 {
-  register user_t *p1=(user_t *)a;
-  register user_t *p2=(user_t *)b;
+  register location_t *p1=(location_t *)a;
+  register location_t *p2=(location_t *)b;
   switch(comparison)
   {
-    case 0 : return (p1->id)>(p2->id)? 1:( (p1->id)<(p2->id) ? -1:0 );
+    case 0 : return strcmp(p1->state,p2->state);
     case 1 : return (p1->locationID)>(p2->locationID)? 1:( (p1->locationID)<(p2->locationID) ? -1:0 );
-    case 2 : return (p1->message_num)>(p2->message_num)? 1:( (p1->message_num)<(p2->message_num) ? -1:0 );
   }
 
   return 0;
@@ -24,19 +24,19 @@ int main (int argc, char **argv)
 {
   /* print usage if needed */
   if (argc != 2) {
-       fprintf(stderr, "Usage: \n0: id\n1: locationID\n2: message_num\n");
+       fprintf(stderr, "Usage: \n0: state\n1: locationID\n");
        exit(0);
    }
 
    /* get comparison number */
   comparison  = atoi(argv[1]);
-  if (comparison < 0 || comparison > 2)
+  if (comparison < 0 || comparison > 1)
   {
     fprintf(stderr, "Invalid argument given for comparison key");
     exit(0);
   }
 
-struct timeval time_start, time_end;
+    struct timeval time_start, time_end;
 
     /* start time */
     gettimeofday(&time_start, NULL);
@@ -46,9 +46,8 @@ struct timeval time_start, time_end;
   FILE *file = NULL;
 
   sprintf(filename, "tableinfo.dat");
-
   file = fopen(filename, "rb");
-
+   
   int locationNum, userNum, messageNum;
   fread(&locationNum, sizeof(int), 1, file);
   fread(&userNum, sizeof(int), 1, file);
@@ -56,42 +55,44 @@ struct timeval time_start, time_end;
   fclose(file);
 
   //read files into buffer
-  user_t *buffer = malloc(sizeof(user_t) * userNum);
+  location_t *buffer = malloc(sizeof(location_t) * locationNum);
 
   FILE *ifp = NULL, *ofp = NULL;
 
-  for (j=0; j < userNum; j++)
+  for (j=0; j < locationNum; j++)
   {
-    sprintf(filename,"user_%06d.dat", j);
+    sprintf(filename,"location_%06d.dat", j);
     ifp = fopen(filename, "rb");
-    user_t *user = read_user(ifp);
-    buffer[j] = *user;
+    location_t *location = read_location(ifp);
+    buffer[j] = *location;
     fclose(ifp);
+	free_location(location);
   }
 
-  qsort(buffer, userNum, sizeof(user_t), cmp);
+  qsort(buffer, locationNum, sizeof(location_t), cmp);
 
-  for (k=0; k < userNum; k++)
+  for (k=0; k < locationNum; k++)
   {
-    sprintf(filename, "user_%06d.dat",k);
+    sprintf(filename, "location_%06d.dat",k);
     ofp = fopen(filename, "wb");
-    user_t *user = &buffer[k];
-    fwrite(&user->id, sizeof(int), 1, ofp);
-    fwrite(user->name, sizeof(char), TEXT_SHORT, ofp);
-    fwrite(&user->locationID, sizeof(int), 1, ofp);
-    fwrite(&user->message_num, sizeof(int), 1, ofp);
+    location_t *location = &buffer[k];
+    fwrite(&location->locationID, sizeof(int), 1, ofp);
+    fwrite(location->city, sizeof(char), TEXT_SHORT, ofp);
+    fwrite(location->state, sizeof(char), TEXT_SHORT, ofp);
     fclose(ofp);
+    
   }
 
   free(buffer);
 
     /* end time */
     gettimeofday(&time_end, NULL);
-
+    
     float totaltime = (time_end.tv_sec - time_start.tv_sec)
                     + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
     printf("\n\nProcess time %f seconds\n", totaltime);
+    
 
   return 0;
 }

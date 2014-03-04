@@ -75,6 +75,7 @@ int main (int argc, char **argv)
     message_t *message = read_message(ifp);
     buffer[j] = *message;
     fclose(ifp);
+	free_message(message);
   }
 
   qsort(buffer, messageNum, sizeof(message_t), cmp);
@@ -94,8 +95,6 @@ int main (int argc, char **argv)
     fwrite(&message-> messageID, sizeof(int), 1, ofp);
     fclose(ofp);
   }
-    
-  free(buffer);
 
   free(buffer);
 

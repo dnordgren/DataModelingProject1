@@ -1,6 +1,4 @@
-
 #include "dictionary2.h"
-
 
 /* Create a new hashtable. */
 hashtable_t *ht_create( int size ) {
@@ -129,4 +127,20 @@ int ht_get( hashtable_t *hashtable, char *key ) {
 		return pair->value;
 	}
 	
+}
+
+/* Free space allocted in memory */
+void ht_cleanup (hashtable_t *hashtable) {
+    int i;
+    entry_t *np, *t;
+    for(i = 0; i < hashtable->size; i++) {
+        np=hashtable->table[i];
+        while(np!=NULL){
+	    t=np->next;
+	    free(np->key);
+	    free(np);
+	    np=t;
+        }
+    }
+    free(hashtable);
 }

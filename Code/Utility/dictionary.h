@@ -28,7 +28,5 @@ void ht_set( hashtable_t *hashtable, char *key, int value ) ;
 
 int ht_get( hashtable_t *hashtable, char *key ) ;
 
-
-
-
+void ht_cleanup (hashtable_t *hashtable) ;
 
