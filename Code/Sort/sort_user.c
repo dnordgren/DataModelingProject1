@@ -45,10 +45,10 @@ struct timeval time_start, time_end;
   char filename[1024];
   FILE *file = NULL;
 
-  sprintf(filename, "tableinfo.dat");
+  sprintf(filename, "../../Data/tableinfo.dat");
 
   file = fopen(filename, "rb");
-   
+
   int locationNum, userNum, messageNum;
   fread(&locationNum, sizeof(int), 1, file);
   fread(&userNum, sizeof(int), 1, file);
@@ -62,7 +62,7 @@ struct timeval time_start, time_end;
 
   for (j=0; j < userNum; j++)
   {
-    sprintf(filename,"user_%06d.dat", j);
+    sprintf(filename,"../../Data/Users/user_%06d.dat", j);
     ifp = fopen(filename, "rb");
     user_t *user = read_user(ifp);
     buffer[j] = *user;
@@ -74,7 +74,7 @@ struct timeval time_start, time_end;
 
   for (k=0; k < userNum; k++)
   {
-    sprintf(filename, "user_%06d.dat",k);
+    sprintf(filename, "../../Data/Users/user_%06d.dat",k);
     ofp = fopen(filename, "wb");
     user_t *user = &buffer[k];
     fwrite(&user->id, sizeof(int), 1, ofp);
@@ -83,17 +83,17 @@ struct timeval time_start, time_end;
     fwrite(&user->message_num, sizeof(int), 1, ofp);
     fclose(ofp);
   }
-  
+
   free(buffer);
 
     /* end time */
     gettimeofday(&time_end, NULL);
-    
+
     float totaltime = (time_end.tv_sec - time_start.tv_sec)
                     + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
     printf("\n\nProcess time %f seconds\n", totaltime);
-    
+
 
   return 0;
 }
