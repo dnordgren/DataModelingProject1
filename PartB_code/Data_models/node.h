@@ -11,6 +11,8 @@
 
 // node structure
 typedef struct {
+	int id; // the node's id
+	char *filepath; // filepath to current node
 	int fanout;	// the number of pages that the node can hold
 	char **compare;	// pointer to an array of 'fanout-1' files
 	char **children;	// pointer to an array of 'fanout' nodes
@@ -22,7 +24,7 @@ typedef struct {
 } node_t;
 
 // "constructor" for node structs
-node_t* create_node(int fanout, char *node_path);
+node_t* create_node(int fanout, char *node_path, int id);
 
 // frees the node
 void free_node(node_t *node);

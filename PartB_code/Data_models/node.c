@@ -1,7 +1,9 @@
 #include "node.h"
 
-node_t* create_node(int fanout, char *node_path) {
+node_t* create_node(int fanout, char *node_path, int id) {
 	node_t *n;
+	n->id = id;
+	n->filepath = node_path;
 	n->fanout = fanout;
 	n->compare = malloc(sizeof(char)*(fanout-1));
 	int i;
@@ -21,7 +23,9 @@ node_t* create_node(int fanout, char *node_path) {
 node_t* read_node(char* node_path) {
 	FILE *infile = fopen(node_path, "rb");
 	node_t *n;
-
+	
+	fread(&(n->id), sizeof(int), 1, infile);
+	fread(n->filepath, sizeof(char*), 1, infile);
 	fread(&(n->fanout), sizeof(int), 1, infile);
 	fread((n->compare), sizeof(char**), 1, infile);
 	fread((n->children), sizeof(char**), 1, infile);
@@ -39,6 +43,8 @@ node_t* read_node(char* node_path) {
 void write_node(node_t *n, char* node_path) {
 	FILE *outfile = fopen(node_path, "wb");
 	
+	fwrite(&(n->id), sizeof(int), 1, outfile);
+	fwrite(n->filepath, sizeof(char*), 1, outfile);
 	fwrite(&(n->fanout), sizeof(int), 1, outfile);
 	fwrite((n->compare), sizeof(char**), 1, outfile);
 	fwrite((n->children), sizeof(char**), 1, outfile);

@@ -1,6 +1,6 @@
-#include "node.h"
+#include "../Data_models/node.h"
 
-int compare_option;
+int compare_option, id_counter = 0;
 
 int main(int argc, char **argv) {
 	if (argc != 4) {
@@ -12,34 +12,44 @@ int main(int argc, char **argv) {
 	compare_option = atoi(argv[2]);
 	int fanout = atoi(argv[3]);
 	
-	int i = 0, id_counter = 0;
+	int i = 0;
 	
 	// create the root node
 	char filename[1024];
-	sprintf(filename, ../../Data/Users/user_%06.dat, i);
+	sprintf(filename, "../../Data/Users/user_%06d.dat", i);
 	FILE *infile = fopen(filename, "rb");
 	user_t *user = read_user(infile);
 	fclose(infile);
-	node_t *root = create_node(fanout, "node_000000_root.dat");
+	
+	node_t *root = create_node(fanout, "node_000000_root.dat", 0);
 	free_user(user);
+	
 	id_counter++;
 	i++;
 	
 	// add nodes
 	for (i; i < total_record_number; i++) {
 		char filename[1024];
-		sprintf(filename, ../../Data/Users/user_%06.dat, i);
+		sprintf(filename, "../../Data/Users/user_%06d.dat", i);
 		FILE *infile = fopen(filename, "rb");
 		user_t *user = read_user(infile);
 		fclose(infile);
-		node_t *node = create_node(fanout, id_counter++);
-		if (insert_element(node->path, user, root->path) == -1) {
+		
+		// node_t *node = create_node(fanout, create_new_path(id_counter), id_counter);
+		
+		if (insert_element(user, root->path) == -1) {
 			//Handle case for splitting root node
 			root = split_root();
-			insert_element(node->path, user, root->path);
+			insert_element(user, root->path;
 		}
 		free_user(user);
 	}
+}
+
+char* create_new_path(int child_id, int parent_id, int child_index) {
+	char filepath[1024];
+	sprintf(filepath, "node_%06d_%06d_%06d.dat", child_id, parent_id, child_index);
+	id_counter++;
 }
 
 int find_element(char *node_path, user_t *in_user, int min, int max) {
@@ -71,10 +81,10 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 	}
 }
 
-int insert_element(char *insert_path, user_t *user, char *filepath) {
-	node_t *node = read_node(insert_path);
+int insert_element(user_t *user, char *filepath) {
+	node_t *node = read_node(filepath);
 
-        int find_result = find_element(node_path, user, 0, node->fanout-1);
+    int find_result = find_element(filepath, user, 0, node->fanout-1);
 	// if current node is a leaf
 	if (node->is_leaf) {
 		// leaf is full
@@ -83,7 +93,8 @@ int insert_element(char *insert_path, user_t *user, char *filepath) {
 			for (i = node->child_num; i > find_result; i--) {
 				node->compare[i] = node->compare[i-1];
 			}
-			node->compare[i] = filepath;
+			//TODO how are we going to save user filepath
+			sprintf(node->compare[i], "user_%06d.dat", user->id);
 		}
 		// if leaf is full, can't insert
 		else {
@@ -93,7 +104,7 @@ int insert_element(char *insert_path, user_t *user, char *filepath) {
 	// not a leaf
 	else {
 		// if child is full
-		if (insert_element(filepath, user, node->children[find_result]) == -1) {
+		if (insert_element(user, node->children[find_result]) == -1) {
 			// cannot split because current node is full
 			if (node->fanout == node->child_num) {
 				return -1;
@@ -106,8 +117,12 @@ int insert_element(char *insert_path, user_t *user, char *filepath) {
 		}
 	}
 	// insert is a success
-	insert_element(filepath, user, node->children[find_result]);
+	insert_element(user, node->children[find_result]);
 	return 0;
+}
+
+int get_id() {
+	return id_counter++;
 }
 
 int split_page(char *parent_node_path, int child_index) {
@@ -125,11 +140,13 @@ int split_page(char *parent_node_path, int child_index) {
 	// move middle child compare element into the parent compare
 	node_t *child_node = read_node(parent_node->children[child_index]);
 	parent_node->compare[child_index] = child_node->compare[child_node->fanout/2];
+	
 	// make new child
-	// TODO file names???
-	char* new_child_path = new_node_path();
-	node_t *new_child_node = create_node(parent_node->fanout, new_child_path);
+	int new_child_id = get_id();
+	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
+	node_t *new_child_node = create_node(parent_node->fanout, new_child_path, new_child_id);
 	parent_node->children[child_index+1] = new_child_path;
+	
 	// move right half of previous child to new child 
 	for (k = parent_node->fanout/2, l = 0; k < parent_node->fanout; k++, l++) {
 		new_child_node->compare[l] = child_node->compare[k];
@@ -141,7 +158,6 @@ int split_page(char *parent_node_path, int child_index) {
 //TODO int delete_element(char* node) {}
 
 
-// TODO write compare function cmp()
 int cmp(user_t *user_1, user_t *user_2) {
 	switch(compare_option) {
 	    case 0 : return (user_1->id)>(user_2->id)? 1:( (user_1->id)<(user_2->id) ? -1:0 );
