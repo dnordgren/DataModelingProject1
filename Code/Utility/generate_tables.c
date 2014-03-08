@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         }
 
         /* Read Record */
-        sprintf(filename, "../../Data/Records/record_%06d.dat", i);
+        sprintf(filename, "../../Records/record_%06d.dat", i);
 	ifp = fopen(filename, "rb");
 	record_t *rec = read_record(ifp);
        	fclose(ifp);
