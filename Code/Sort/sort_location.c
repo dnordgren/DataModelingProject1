@@ -45,9 +45,9 @@ int main (int argc, char **argv)
   char filename[1024];
   FILE *file = NULL;
 
-  sprintf(filename, "tableinfo.dat");
+  sprintf(filename, "../../Data/tableinfo.dat");
   file = fopen(filename, "rb");
-   
+
   int locationNum, userNum, messageNum;
   fread(&locationNum, sizeof(int), 1, file);
   fread(&userNum, sizeof(int), 1, file);
@@ -61,7 +61,7 @@ int main (int argc, char **argv)
 
   for (j=0; j < locationNum; j++)
   {
-    sprintf(filename,"location_%06d.dat", j);
+    sprintf(filename,"../../Data/Locations/location_%06d.dat", j);
     ifp = fopen(filename, "rb");
     location_t *location = read_location(ifp);
     buffer[j] = *location;
@@ -73,26 +73,26 @@ int main (int argc, char **argv)
 
   for (k=0; k < locationNum; k++)
   {
-    sprintf(filename, "location_%06d.dat",k);
+    sprintf(filename, "../../Data/Locations/location_%06d.dat",k);
     ofp = fopen(filename, "wb");
     location_t *location = &buffer[k];
     fwrite(&location->locationID, sizeof(int), 1, ofp);
     fwrite(location->city, sizeof(char), TEXT_SHORT, ofp);
     fwrite(location->state, sizeof(char), TEXT_SHORT, ofp);
     fclose(ofp);
-    
+
   }
 
   free(buffer);
 
     /* end time */
     gettimeofday(&time_end, NULL);
-    
+
     float totaltime = (time_end.tv_sec - time_start.tv_sec)
                     + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
     printf("\n\nProcess time %f seconds\n", totaltime);
-    
+
 
   return 0;
 }

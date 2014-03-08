@@ -25,11 +25,11 @@ int findMessageEdge(int min, int max, int key, int direction, int edge)
    middle = (min + max)/2;
 
    message_t *message = malloc(sizeof(message_t));
-   
+
    /* read in current middle to compare to matchstring */
    FILE *ifp = NULL;
    char filename [1024];
-   sprintf(filename, "message_%07d.dat", middle);
+   sprintf(filename, "../../Data/Messages/message_%07d.dat", middle);
    ifp = fopen(filename, "rb");
    message = read_message(ifp);
    fclose(ifp);
@@ -52,18 +52,18 @@ int findMessageEdge(int min, int max, int key, int direction, int edge)
 
    /* Reallocate memory for temporary location*/
    message = malloc(sizeof(message_t));
-   sprintf(filename, "message_%07d.dat", middle + direction);
+   sprintf(filename, "../../Data/Messages/message_%07d.dat", middle + direction);
    ifp = fopen(filename, "rb");
    message = read_message(ifp);
    fclose(ifp);
    hourBelow = message->hour;
    minuteBelow = message->minute;
    free(message);
-    
+
    if(compareTime(key, hourMid*60 + minuteMid) < 0 || (direction == -1 && compareTime(key, hourBelow*60 + minuteBelow) == 0))
    {
 	   return findMessageEdge(min, middle - 1, key, direction, edge);
-   } 
+   }
    else if (compareTime(key, hourMid*60 + minuteMid) > 0 || (direction == 1 && compareTime(key, hourBelow*60 + minuteBelow)==0) )
    {
       return findMessageEdge(middle + 1, max, key, direction, edge);
@@ -87,11 +87,11 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
    middle = (min + max)/2;
 
    user_t *user = malloc(sizeof(user_t));
-   
+
    /* read in current middle to compare to matchstring */
    FILE *ifp = NULL;
    char filename [1024];
-   sprintf(filename, "user_%06d.dat", middle);
+   sprintf(filename, "../../Data/Users/user_%06d.dat", middle);
    ifp = fopen(filename, "rb");
    user = read_user(ifp);
    fclose(ifp);
@@ -113,18 +113,18 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
 
    /* Reallocate memory for temporary location*/
    user = malloc(sizeof(user_t));
-   sprintf(filename, "user_%06d.dat", middle + direction);
+   sprintf(filename, "../../Data/Users/user_%06d.dat", middle + direction);
    ifp = fopen(filename, "rb");
    user = read_user(ifp);
    fclose(ifp);
    locBelow = user->locationID;
    free(user);
-    
+
 
    if(key < locMid  || (direction == -1 && key == locBelow))
    {
       return findUserEdge(min, middle - 1, key, direction, edge);
-   } 
+   }
    else if (key > locMid || (direction == 1 && key == locBelow))
    {
       return findUserEdge(middle + 1, max, key, direction, edge);
@@ -143,13 +143,13 @@ int main(int argc, char **argv)
        fprintf(stderr, "No args needed");
        exit(0);
    }
-    
+
     char filename[1024];
     FILE *file = NULL, *fp = NULL;
 
-    sprintf(filename, "tableinfo.dat");
+    sprintf(filename, "../../Data/tableinfo.dat");
     file = fopen(filename, "rb");
-     
+
     int locationNum, userNum, messageNum;
     fread(&locationNum, sizeof(int), 1, file);
     fread(&userNum, sizeof(int), 1, file);
@@ -167,14 +167,14 @@ int main(int argc, char **argv)
     messageStart = findMessageEdge(0, messageNum, lowKey, -1, 0);
     messageEnd = findMessageEdge(0, messageNum, highKey, 1, messageNum);
     printf("Message Start: %d, Message End: %d\n", messageStart, messageEnd);
-    
+
     int *buffer, userStart;
     numOfMessages = messageEnd-messageStart+1;
     buffer = malloc(sizeof(int) * numOfMessages);
 
     for (k = 0, i = messageStart; i <= messageEnd; k++, i++) {
       /* open the corresponding file */
-      sprintf(filename, "message_%07d.dat", i);
+      sprintf(filename, "../../Data/Messages/message_%07d.dat", i);
       fp = fopen(filename,"rb");
       if (!fp) {
         fprintf(stderr, "Cannot open %s\n", filename);
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
       message_t *message = read_message(fp);
       fclose(fp);
       // printf("Hour: %i, User ID: %i, Message ID: %i\n", message->hour, message->userID, message->messageID);
-      
+
       buffer[k] = message->userID;
 
       free_message(message);
@@ -231,5 +231,5 @@ int cmp(const void *a, const void *b)
 
 int compareTime(int minutes1, int minutes2)
 {
-    return (minutes1 > minutes2) ? 1 : (minutes1 < minutes2) ? -1 : 0;    
+    return (minutes1 > minutes2) ? 1 : (minutes1 < minutes2) ? -1 : 0;
 }
