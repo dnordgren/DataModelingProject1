@@ -26,12 +26,12 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
   /* read in current middle to compare to matchstring */
   FILE *ifp = NULL;
   char filename [1024];
-  sprintf(filename, "location_%06d.dat", middle);
+  sprintf(filename, "../../Data/Locations/location_%06d.dat", middle);
   ifp = fopen(filename, "rb");
   location = read_location(ifp);
   fclose(ifp);
   stateMid = location->state;
-  
+
    /* catch end-case of mid being first element */
   if (middle == edge)
   {
@@ -47,8 +47,8 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
 
   /* Reallocate memory for temporary location*/
   //location = malloc(sizeof(location_t));
-  
-  sprintf(filename, "location_%06d.dat", middle + direction);
+
+  sprintf(filename, "../../Data/Locations/location_%06d.dat", middle + direction);
   ifp = fopen(filename, "rb");
   location2 = read_location(ifp);
   fclose(ifp);
@@ -61,7 +61,7 @@ int findLocationEdge(int min, int max, char *matchString, int direction, int edg
     free_location(location);
     free_location(location2);
     return findLocationEdge(min, middle - 1, matchString, direction, edge);
-  } 
+  }
   else if (strcmp(matchString, stateMid) > 0 || (direction == 1 && strcmp(matchString, stateMidBelow) == 0))
   {
     free_location(location);
@@ -94,7 +94,7 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
   /* read in current middle to compare to matchstring */
   FILE *ifp = NULL;
   char filename [1024];
-  sprintf(filename, "user_%06d.dat", middle);
+  sprintf(filename, "../../Data/Users/user_%06d.dat", middle);
   ifp = fopen(filename, "rb");
   user = read_user(ifp);
   fclose(ifp);
@@ -116,7 +116,7 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
 
   /* Reallocate memory for temporary location*/
   //user = malloc(sizeof(user_t));
-  sprintf(filename, "user_%06d.dat", middle + direction);
+  sprintf(filename, "../../Data/Users/user_%06d.dat", middle + direction);
   ifp = fopen(filename, "rb");
   user = read_user(ifp);
   fclose(ifp);
@@ -126,7 +126,7 @@ int findUserEdge(int min, int max, int key, int direction, int edge)
   if(key < locMid || (direction == -1 && key == locBelow))
   {
     return findUserEdge(min, middle - 1, key, direction, edge);
-  } 
+  }
   else if (key > locMid || (direction == 1 && key == locBelow))
   {
     return findUserEdge(middle + 1, max, key, direction, edge);
@@ -141,18 +141,18 @@ int main(int argc, char **argv)
 {
   int i, matches = 0;
   /* print usage if needed */
-  if (argc != 1) 
+  if (argc != 1)
   {
     fprintf(stderr, "No args needed");
     exit(0);
   }
-  
+
   char filename[1024];
   FILE *file = NULL, *fp = NULL;
 
-  sprintf(filename, "tableinfo.dat");
+  sprintf(filename, "../../Data/tableinfo.dat");
   file = fopen(filename, "rb");
- 
+
   int locationNum, userNum, messageNum;
   fread(&locationNum, sizeof(int), 1, file);
   fread(&userNum, sizeof(int), 1, file);
@@ -172,10 +172,10 @@ int main(int argc, char **argv)
   nebraskaEnd = findLocationEdge(0, locationNum, matchString, 1, locationNum);
   //printf("NE Start: %d, NE End: %d", nebraskaStart, nebraskaEnd);
 
-  for ( i = nebraskaStart; i <= nebraskaEnd; i++) 
+  for ( i = nebraskaStart; i <= nebraskaEnd; i++)
   {
     /* open the corresponding file */
-    sprintf(filename, "location_%06d.dat", i);
+    sprintf(filename, "../../Data/Locations/location_%06d.dat", i);
 
     fp = fopen(filename,"rb");
 
