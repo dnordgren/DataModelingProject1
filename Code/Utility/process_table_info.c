@@ -5,8 +5,8 @@ int main()
 {
     char filename[1024];
     FILE *file = NULL;
-    
-    sprintf(filename, "tableinfo.dat");
+
+    sprintf(filename, "../../Data/tableinfo.dat");
     file = fopen(filename, "rb");
 
     int locationNum, userNum, messageNum;
