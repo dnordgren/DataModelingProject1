@@ -4,7 +4,9 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	node_t *n = malloc(sizeof(node_t));
 	n->id = id;
 	n->filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	sprintf(n->filepath, "%s", node_path);
+	//sprintf(n->filepath, "%s", node_path);
+	n->filepath = node_path;
+
 	n->fanout = fanout;
 	n->compare = malloc(sizeof(char)*(fanout-1));
 	int i;
@@ -25,6 +27,11 @@ node_t* create_node(int fanout, char *node_path, int id) {
 
 node_t* read_node(char* node_path) {
 	FILE *infile = fopen(node_path, "rb");
+	if (infile == NULL) {
+			fprintf(stderr, "The file stream is NULL\n");
+			exit(0);
+	}
+
 	node_t *n = malloc(sizeof(node_t));
 	n->filepath = malloc(sizeof(char)*FILENAME_LENGTH);
 
@@ -57,6 +64,10 @@ node_t* read_node(char* node_path) {
 
 void write_node(node_t *n, char* node_path) {
 	FILE *outfile = fopen(node_path, "wb");
+	if (outfile == NULL) {
+			fprintf(stderr, "The file stream is NULL\n");
+			exit(0);
+	}
 
 	fwrite(&(n->id), sizeof(int), 1, outfile);
 	fwrite(&(n->filepath[0]), sizeof(char), FILENAME_LENGTH, outfile);
