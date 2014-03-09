@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
 
 	node_t *root = create_node(fanout, "node_000000_root.dat", 0);
 	root->is_leaf = true;
+	write_node(root, root->filepath);
 	free_user(user);
 
 	id_counter++;
@@ -98,14 +99,16 @@ int insert_element(user_t *user, char *filepath) {
     int find_result = find_element(filepath, user, 0, node->fanout-1);
 	// if current node is a leaf
 	if (node->is_leaf) {
-		// leaf is full
-		if (node->fanout != node->child_num) {
+		// leaf is not full
+		if ((node->fanout)-1 != node->child_num) {
 			int i;
 			for (i = node->child_num; i > find_result; i--) {
 				node->compare[i] = node->compare[i-1];
 			}
 			//TODO how are we going to save user filepath
 			sprintf(node->compare[i], "../../Data/Users/user_%06d.dat", user->id);
+			node->child_num++;
+			write_node(node, node->filepath);
 		}
 		// if leaf is full, can't insert
 		else {
@@ -124,11 +127,11 @@ int insert_element(user_t *user, char *filepath) {
 			else {
 				split_page(node->filepath, find_result);
 				find_result = find_element(node->filepath, user, 0, node->fanout-1);
+				// insert is a success
+				insert_element(user, node->children[find_result]);
 			}
 		}
 	}
-	// insert is a success
-	insert_element(user, node->children[find_result]);
 	return 0;
 }
 
@@ -139,7 +142,7 @@ int get_id() {
 int split_page(char *parent_node_path, int child_index) {
 	node_t *parent_node = read_node(parent_node_path);
 
-	int i, j, k, l;
+	int i, j, k, l, m, n;
 	// move children to the right to make space for new child
 	for (i = parent_node->child_num; i > child_index; i--) {
 		parent_node->children[i] = parent_node->children[i-1];
@@ -157,18 +160,33 @@ int split_page(char *parent_node_path, int child_index) {
 	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
 	node_t *new_child_node = create_node(parent_node->fanout, new_child_path, new_child_id);
 	parent_node->children[child_index+1] = new_child_path;
+	free(new_child_path);
 
 	// move right half of previous child to new child
-	for (k = parent_node->fanout/2, l = 0; k < parent_node->fanout; k++, l++) {
+	for (k = parent_node->fanout/2, l = 0; k < parent_node->fanout-1; k++, l++) {
 		new_child_node->compare[l] = child_node->compare[k];
 		// clear the previous child elements (compares) after moving
 		child_node->compare[k] = NULL;
 	}
+
+	for (m = parent_node->fanout/2, n = 0; m < parent_node->fanout; m++, n++) {
+		new_child_node->children[n] = child_node->children[m];
+		child_node->children[m] = NULL;
+	}
+
+	// update child numbers
+	child_node->child_num = parent_node->fanout/2;
+	new_child_node->child_num = parent_node->fanout - parent_node->fanout/2;
+
+	write_node(parent_node, parent_node->filepath);
+	write_node(child_node, child_node->filepath);
+	write_node(new_child_node, new_child_node->filepath);
+
 	return 0;
 }
 
 node_t* split_root(node_t *root) {
-	int i,j;
+	int i,j,k,l;
 	//Create new root node
 	int new_root_id = get_id();
 	char new_root_filepath[1024];
@@ -183,6 +201,7 @@ node_t* split_root(node_t *root) {
 	int new_root_child_id = get_id();
 	char *new_root_child_path = create_new_path(new_root_child_id, new_root_node->id, 1);
 	node_t *new_root_child = create_node(new_root_node->fanout, new_root_child_path, new_root_child_id);
+	free(new_root_child_path);
 
 	//Move right half of elements from root to new sibling
 	for (i = root->fanout/2, j = 0; i < root->fanout; i++, j++) {
@@ -191,8 +210,23 @@ node_t* split_root(node_t *root) {
 		root->compare[i] = NULL;
 	}
 
+	for (k = root->fanout/2, l = 0; k < root->fanout; k++, l++) {
+		new_root_child->children[l] = root->children[k];
+		root->children[k] = NULL;
+	}
+
 	//New root child has same leaf property as previous root
 	new_root_child->is_leaf = root->is_leaf;
+
+	//Give previous root new file name, and delete previous name
+	char* previous_root_filepath = root->filepath;
+	root->filepath = create_new_path(root->id, new_root_node->id, 0);
+	remove(previous_root_filepath);
+	free(previous_root_filepath);
+
+	write_node(root, root->filepath);
+	write_node(new_root_node, new_root_node->filepath);
+	write_node(new_root_child, new_root_child->filepath);
 
 	return new_root_node;
 }
