@@ -120,7 +120,7 @@ int insert_element(user_t *user, char *filepath) {
 			// split children
 			else {
 				split_page(node->filepath, find_result);
-				find_result = find_element(node->filepath, user, 0, node->fanout-1);
+				find_result = find_element(node->filepath, user, 0, node->child_num-2);
 				// insert is a success
 				insert_element(user, node->children[find_result]);
 			}
@@ -135,6 +135,8 @@ int get_id() {
 
 int split_page(char *parent_node_path, int child_index) {
 	node_t *parent_node = read_node(parent_node_path);
+
+	// TODO : no need to copy up when child is not leaf
 
 	int i, j, k, l, m, n;
 	// move children to the right to make space for new child
@@ -154,23 +156,22 @@ int split_page(char *parent_node_path, int child_index) {
 	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
 	node_t *new_child_node = create_node(parent_node->fanout, new_child_path, new_child_id);
 	parent_node->children[child_index+1] = new_child_path;
-	free(new_child_path);
-
+	
 	// move right half of previous child to new child
 	for (k = parent_node->fanout/2, l = 0; k < parent_node->fanout-1; k++, l++) {
 		new_child_node->compare[l] = child_node->compare[k];
 		// clear the previous child elements (compares) after moving
-		child_node->compare[k] = NULL;
+		child_node->compare[k] = "";
 	}
 
 	for (m = parent_node->fanout/2, n = 0; m < parent_node->fanout; m++, n++) {
 		new_child_node->children[n] = child_node->children[m];
-		child_node->children[m] = NULL;
+		child_node->children[m] = "";
 	}
 
 	// update child numbers
 	parent_node->child_num = parent_node->child_num+1;
-	child_node->child_num = parent_node->fanout/2;
+	child_node->child_num = parent_node->fanout/2 + 1;
 	new_child_node->child_num = parent_node->fanout - parent_node->fanout/2;
 
 	write_node(parent_node, parent_node->filepath);
@@ -182,11 +183,13 @@ int split_page(char *parent_node_path, int child_index) {
 
 char* split_root(char *root_path) {
 	int i,j,k,l;
+	
+	// TODO : no need to copy up when child is not leaf
 
 	node_t *root = read_node(root_path);
 	//Create new root node
 	int new_root_id = get_id();
-	char new_root_filepath[1024];
+	char* new_root_filepath = malloc(sizeof(char)*FILENAME_LENGTH);
 	sprintf(new_root_filepath, "node_%06d_root.dat", new_root_id);
 	node_t *new_root_node = create_node(root->fanout, new_root_filepath, new_root_id);
 	new_root_node->is_leaf = false;
@@ -197,10 +200,19 @@ char* split_root(char *root_path) {
 	//Create new root sibling node
 	int new_root_child_id = get_id();
 	char *new_root_child_path = create_new_path(new_root_child_id, new_root_node->id, 1);
+	char *old_root_child_path = create_new_path(root->id, new_root_node->id, 0);
+	
 	node_t *new_root_child = create_node(new_root_node->fanout, new_root_child_path, new_root_child_id);
 
+	new_root_node->children[0] = old_root_child_path;
+	new_root_node->children[1] = new_root_child_path;
+	new_root_node->child_num = 2;
+
+	write_node(new_root_node, new_root_node->filepath);
+
+
 	//Move right half of elements from root to new sibling
-	for (i = (root->fanout)/2, j = 0; i < root->fanout-1; i++, j++) {
+	for (i = (root->fanout)/2, j = 0; i < (root->fanout)-1; i++, j++) {
 		new_root_child->compare[j] = root->compare[i];
 		// clear the previous child elements (compares) after moving
 		root->compare[i] = "";
@@ -213,29 +225,23 @@ char* split_root(char *root_path) {
 
 	// update child numbers
 	root->child_num = root->fanout/2;
-	new_root_node->child_num = 2;
 	new_root_child->child_num = root->fanout - root->fanout/2;
 
 	//New root child has same leaf property as previous root
 	new_root_child->is_leaf = root->is_leaf;
 
 	//Give previous root new file name, and delete previous name
-	char* previous_root_filepath = root->filepath;
-	root->filepath = create_new_path(root->id, new_root_node->id, 0);
-	remove(previous_root_filepath);
-
-	new_root_node->children[0] = root->filepath;
-	new_root_node->children[1] = new_root_child->filepath;
+	//char* previous_root_filepath = root->filepath;
+	remove(root->filepath);
+	root->filepath = old_root_child_path;
 
 	write_node(root, root->filepath);
-	write_node(new_root_node, new_root_node->filepath);
 	write_node(new_root_child, new_root_child->filepath);
 
-	return new_root_node->filepath;
+	return new_root_filepath;
 }
 
 //TODO int delete_element(char* node) {}
-
 
 int cmp(user_t *user_1, user_t *user_2) {
 	switch(compare_option) {
