@@ -13,8 +13,8 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	for (i = 0; i < fanout; i++) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 	}
-	n->children = malloc(sizeof(char)*(fanout));
-	for(i = 0; i < fanout; i++) {
+	n->children = malloc(sizeof(char)*(fanout+1));
+	for(i = 0; i < fanout+1; i++) {
 		n->children[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 	}
 	n->right_sibling = malloc(sizeof(char)*FILENAME_LENGTH);
@@ -44,8 +44,8 @@ node_t* read_node(char* node_path) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 		fread((n->compare[i]), sizeof(char), FILENAME_LENGTH, infile);
 	}
-	n->children = malloc(sizeof(char)*(n->fanout));
-	for(i = 0; i < n->fanout; i++) {
+	n->children = malloc(sizeof(char)*(n->fanout+1));
+	for(i = 0; i < n->fanout+1; i++) {
 		n->children[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 		fread((n->children[i]), sizeof(char), FILENAME_LENGTH, infile);
 	}
@@ -95,7 +95,7 @@ void free_node(node_t *n) {
 	for (i = 0; i < n->fanout; i++) {
 		free(n->compare[i]);
 	}
-	for (i = 0; i < n->fanout; i++) {
+	for (i = 0; i < n->fanout+1; i++) {
 		free(n->children[i]);
 	}
 	free(n->right_sibling);
