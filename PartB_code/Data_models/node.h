@@ -13,6 +13,9 @@
 typedef struct {
 	int id; // the node's id
 	char *filepath; // filepath to current node
+	
+	// TODO : key property for comparison instead of using file I/O
+	
 	int fanout;	// the number of pages that the node can hold
 	char **compare;	// pointer to an array of 'fanout-1' files
 	char **children;	// pointer to an array of 'fanout' nodes

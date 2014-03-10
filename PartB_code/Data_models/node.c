@@ -8,9 +8,9 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	n->filepath = node_path;
 
 	n->fanout = fanout;
-	n->compare = malloc(sizeof(char)*(fanout-1));
+	n->compare = malloc(sizeof(char)*(fanout));
 	int i;
-	for (i = 0; i < fanout-1; i++) {
+	for (i = 0; i < fanout; i++) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 	}
 	n->children = malloc(sizeof(char)*(fanout));
@@ -39,8 +39,8 @@ node_t* read_node(char* node_path) {
 	fread(&(n->filepath[0]), sizeof(char), FILENAME_LENGTH, infile);
 	fread(&(n->fanout), sizeof(int), 1, infile);
 	int i;
-	n->compare = malloc(sizeof(char)*(n->fanout-1));
-	for (i = 0; i < n->fanout-1; i++) {
+	n->compare = malloc(sizeof(char)*(n->fanout));
+	for (i = 0; i < n->fanout; i++) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 		fread((n->compare[i]), sizeof(char), FILENAME_LENGTH, infile);
 	}
@@ -73,6 +73,8 @@ void write_node(node_t *n, char* node_path) {
 	fwrite(&(n->filepath[0]), sizeof(char), FILENAME_LENGTH, outfile);
 	fwrite(&(n->fanout), sizeof(int), 1, outfile);
 	int i;
+	// only normally write to compares
+	// the fanout-th element is overflow
 	for (i = 0; i < n->fanout-1; i++) {
 		fwrite((n->compare[i]), sizeof(char), FILENAME_LENGTH, outfile);
 	}
@@ -90,7 +92,7 @@ void write_node(node_t *n, char* node_path) {
 
 void free_node(node_t *n) {
 	int i;
-	for (i = 0; i < n->fanout-1; i++) {
+	for (i = 0; i < n->fanout; i++) {
 		free(n->compare[i]);
 	}
 	for (i = 0; i < n->fanout; i++) {
