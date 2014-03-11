@@ -8,12 +8,12 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	n->filepath = node_path;
 
 	n->fanout = fanout;
-	n->compare = malloc(sizeof(char)*(fanout));
+	n->compare = malloc(sizeof(char *)*(fanout));
 	int i;
 	for (i = 0; i < fanout; i++) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 	}
-	n->children = malloc(sizeof(char)*(fanout+1));
+	n->children = malloc(sizeof(char *)*(fanout+1));
 	for(i = 0; i < fanout+1; i++) {
 		n->children[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 	}
@@ -39,12 +39,12 @@ node_t* read_node(char* node_path) {
 	fread(&(n->filepath[0]), sizeof(char), FILENAME_LENGTH, infile);
 	fread(&(n->fanout), sizeof(int), 1, infile);
 	int i;
-	n->compare = malloc(sizeof(char)*(n->fanout));
+	n->compare = malloc(sizeof(char *)*(n->fanout));
 	for (i = 0; i < n->fanout; i++) {
 		n->compare[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 		fread((n->compare[i]), sizeof(char), FILENAME_LENGTH, infile);
 	}
-	n->children = malloc(sizeof(char)*(n->fanout+1));
+	n->children = malloc(sizeof(char *)*(n->fanout+1));
 	for(i = 0; i < n->fanout+1; i++) {
 		n->children[i] = malloc(sizeof(char)*FILENAME_LENGTH);
 		fread((n->children[i]), sizeof(char), FILENAME_LENGTH, infile);
@@ -88,6 +88,16 @@ void write_node(node_t *n, char* node_path) {
 	fwrite(&(n->is_leaf), sizeof(bool), 1, outfile);
 
 	fclose(outfile);
+}
+
+char* rename_node(char *filename, int parent_id, int child_index) {
+	node_t *node = read_node(filename);
+	char *new_filename = malloc(sizeof(char)*1024);
+	sprintf(new_filename, "node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
+	remove(node->filepath);
+	node->filepath = new_filename;
+	write_node(node, node->filepath);
+	return new_filename;
 }
 
 void free_node(node_t *n) {

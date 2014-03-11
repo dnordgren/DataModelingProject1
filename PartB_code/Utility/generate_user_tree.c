@@ -143,9 +143,6 @@ int split_page(char *parent_node_path, int child_index) {
 	int new_child_id = get_id();
 	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
 	node_t *new_child_node = create_node(parent_node->fanout, new_child_path, new_child_id);
-	parent_node->children[child_index+1] = new_child_path;
-	parent_node->child_num = parent_node->child_num+1;
-	write_node(parent_node, parent_node->filepath);
 
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
@@ -163,8 +160,8 @@ int split_page(char *parent_node_path, int child_index) {
 	}
 	if(!child_node->is_leaf) {
 		// moving children to new node
-		for (m = (parent_node->fanout/2)+1+no_copy_pls, n = 0; m < parent_node->fanout+1; m++, n++) {
-			new_child_node->children[n] = child_node->children[m];
+		for (m = 3, n = 0; m < (parent_node->fanout+1); m++, n++) {
+			new_child_node->children[n] = rename_node(child_node->children[m], new_child_node->id, n);
 			child_node->children[m] = "";
 		}
 	}
@@ -172,10 +169,14 @@ int split_page(char *parent_node_path, int child_index) {
 	// update child numbers
 	child_node->child_num = (parent_node->fanout)/2+1;
 	new_child_node->child_num = ((parent_node->fanout+1) - (parent_node->fanout/2+1))-no_copy_pls+1;
-	
+
 	// set new child to leaf if other child is leaf
 	new_child_node->is_leaf = child_node->is_leaf;
 
+	parent_node->children[child_index+1] = new_child_path;
+	parent_node->child_num = parent_node->child_num+1;
+
+	write_node(parent_node, parent_node->filepath);
 	write_node(child_node, child_node->filepath);
 	write_node(new_child_node, new_child_node->filepath);
 
@@ -208,12 +209,6 @@ char* split_root(char *root_path) {
 
 	node_t *new_root_child = create_node(new_root_node->fanout, new_root_child_path, new_root_child_id);
 
-	new_root_node->children[0] = old_root_child_path;
-	new_root_node->children[1] = new_root_child_path;
-	new_root_node->child_num = 2;
-
-	write_node(new_root_node, new_root_node->filepath);
-
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
 	// TODO : get fancy
@@ -230,10 +225,12 @@ char* split_root(char *root_path) {
 		root->compare[i] = "";
 	}
 
-	// moving children to new node
-	for (k = ((root->fanout)/2)+no_copy_pls, l = 0; k < root->fanout+1; k++, l++) {
-		new_root_child->children[l] = root->children[k];
-		root->children[k] = "";
+	if(!root->is_leaf) {
+		// moving children to new node
+		for (k = ((root->fanout)/2)+no_copy_pls, l = 0; k < root->fanout+1; k++, l++) {
+			new_root_child->children[l] = rename_node(root->children[k], new_root_child->id, l);
+			root->children[k] = "";
+		}
 	}
 
 	// update child numbers
@@ -249,6 +246,11 @@ char* split_root(char *root_path) {
 	remove(root->filepath);
 	root->filepath = old_root_child_path;
 
+	new_root_node->children[0] = old_root_child_path;
+	new_root_node->children[1] = new_root_child_path;
+	new_root_node->child_num = 2;
+
+	write_node(new_root_node, new_root_node->filepath);
 	write_node(root, root->filepath);
 	write_node(new_root_child, new_root_child->filepath);
 
