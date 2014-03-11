@@ -28,7 +28,7 @@ node_t* create_node(int fanout, char *node_path, int id) {
 node_t* read_node(char* node_path) {
 	FILE *infile = fopen(node_path, "rb");
 	if (infile == NULL) {
-			fprintf(stderr, "The file stream is NULL\n");
+			fprintf(stderr, "The input file stream %s is NULL\n", node_path);
 			exit(0);
 	}
 
@@ -65,7 +65,7 @@ node_t* read_node(char* node_path) {
 void write_node(node_t *n, char* node_path) {
 	FILE *outfile = fopen(node_path, "wb");
 	if (outfile == NULL) {
-			fprintf(stderr, "The file stream is NULL\n");
+			fprintf(stderr, "The output file stream %s is NULL\n", node_path);
 			exit(0);
 	}
 
@@ -75,10 +75,10 @@ void write_node(node_t *n, char* node_path) {
 	int i;
 	// only normally write to compares
 	// the fanout-th element is overflow
-	for (i = 0; i < n->fanout-1; i++) {
+	for (i = 0; i < n->fanout; i++) {
 		fwrite((n->compare[i]), sizeof(char), FILENAME_LENGTH, outfile);
 	}
-	for(i = 0; i < n->fanout; i++) {
+	for(i = 0; i < n->fanout+1; i++) {
 		fwrite((n->children[i]), sizeof(char), FILENAME_LENGTH, outfile);
 	}
 	fwrite(&(n->child_num), sizeof(int), 1, outfile);

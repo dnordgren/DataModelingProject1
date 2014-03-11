@@ -94,9 +94,9 @@ int insert_element(user_t *user, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			node->compare[i] = node->compare[i-1];
 		}
-		char temp[1024];
+		char *temp = malloc(sizeof(char)*1024);
 		sprintf(temp, "../../Data/Users/user_%06d.dat", user->id);
-		node->compare[find_result] = &temp[0];
+		node->compare[find_result] = temp;
 		node->child_num++;
 		write_node(node, node->filepath);
 
@@ -132,7 +132,7 @@ int split_page(char *parent_node_path, int child_index) {
 		parent_node->children[i] = parent_node->children[i-1];
 	}
 	// move compares to the right to make space for new compare
-	for (j = parent_node->child_num-1; j > child_index; j--) {
+	for (j = parent_node->child_num-1; j > child_index+1; j--) {
 		parent_node->compare[j] = parent_node->compare[j-1];
 	}
 	// move middle child compare element into the parent compare
@@ -144,6 +144,8 @@ int split_page(char *parent_node_path, int child_index) {
 	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
 	node_t *new_child_node = create_node(parent_node->fanout, new_child_path, new_child_id);
 	parent_node->children[child_index+1] = new_child_path;
+	parent_node->child_num = parent_node->child_num+1;
+	write_node(parent_node, parent_node->filepath);
 
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
@@ -159,19 +161,21 @@ int split_page(char *parent_node_path, int child_index) {
 		// clear the previous child elements (compares) after moving
 		child_node->compare[k] = "";
 	}
-
-	// moving children to new node
-	for (m = (parent_node->fanout/2)+1+no_copy_pls, n = 0; m < parent_node->fanout+1; m++, n++) {
-		new_child_node->children[n] = child_node->children[m];
-		child_node->children[m] = "";
+	if(!child_node->is_leaf) {
+		// moving children to new node
+		for (m = (parent_node->fanout/2)+1+no_copy_pls, n = 0; m < parent_node->fanout+1; m++, n++) {
+			new_child_node->children[n] = child_node->children[m];
+			child_node->children[m] = "";
+		}
 	}
 
 	// update child numbers
-	parent_node->child_num = parent_node->child_num+1;
 	child_node->child_num = (parent_node->fanout)/2+1;
 	new_child_node->child_num = ((parent_node->fanout+1) - (parent_node->fanout/2+1))-no_copy_pls+1;
+	
+	// set new child to leaf if other child is leaf
+	new_child_node->is_leaf = child_node->is_leaf;
 
-	write_node(parent_node, parent_node->filepath);
 	write_node(child_node, child_node->filepath);
 	write_node(new_child_node, new_child_node->filepath);
 
@@ -234,7 +238,7 @@ char* split_root(char *root_path) {
 
 	// update child numbers
 	root->child_num = (root->fanout)/2+1;
-	new_root_child->child_num = ((root->fanout+1) - (root->fanout/2)+1)-no_copy_pls+1;
+	new_root_child->child_num = (root->fanout+1) - ((root->fanout/2)+1)-no_copy_pls+1;
 
 
 	// New root child has same leaf property as previous root
