@@ -88,6 +88,7 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 
 		int result = cmp(in_user, user);
 
+		free_user(user);
 		fclose(compare_file);
 
 		if (result == -1) {
@@ -111,11 +112,9 @@ int insert_element(user_t *user, char *filepath) {
 		// insert element into leaf (even if into overflow)
 		int i;
 		for (i = node->child_num-1; i > find_result; i--) {
-			node->compare[i] = node->compare[i-1];
+			sprintf(node->compare[i], "%s", node->compare[i-1]);
 		}
-		char *temp = malloc(sizeof(char)*1024);
-		sprintf(temp, "../../Data/Users/user_%06d.dat", user->id);
-		node->compare[find_result] = temp;
+		sprintf(node->compare[find_result], "../../Data/Users/user_%06d.dat", user->id);
 		node->child_num++;
 		write_node(node, node->filepath);
 
@@ -134,6 +133,7 @@ int insert_element(user_t *user, char *filepath) {
 			}
 		}
 	}
+	free_node(node);
 	return 0;
 }
 
@@ -164,7 +164,8 @@ int split_page(char *parent_node_path, int child_index) {
 	char *temp = malloc(sizeof(char)*1024);
 	sprintf(temp, "../../Data/User_Tree/%s", new_child_path);
 	node_t *new_child_node = create_node(parent_node->fanout, temp, new_child_id);
-
+	free(temp);
+	
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
 	// TODO : get fancy
@@ -181,7 +182,7 @@ int split_page(char *parent_node_path, int child_index) {
 	}
 	if(!child_node->is_leaf) {
 		// moving children to new node
-		for (m = 3, n = 0; m < (parent_node->fanout+1); m++, n++) {
+		for (m = ((parent_node->fanout)/2)+no_copy_pls, n = 0; m < (parent_node->fanout+1); m++, n++) {
 			sprintf(new_child_node->children[n], "%s", rename_node(child_node->children[m], new_child_node->id, n));
 			sprintf(child_node->children[m],"");
 		}

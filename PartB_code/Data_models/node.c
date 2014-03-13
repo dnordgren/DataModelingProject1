@@ -97,6 +97,7 @@ char* rename_node(char *filename, int parent_id, int child_index) {
 	remove(node->filepath);
 	node->filepath = new_filename;
 	write_node(node, node->filepath);
+	free_node(node);
 	return new_filename;
 }
 
