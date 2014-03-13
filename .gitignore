@@ -1,5 +1,7 @@
 *.dat
 *.dSYM
 *.plist
+generate_tables
 generate_user_tree
+Records/
 
