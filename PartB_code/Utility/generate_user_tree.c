@@ -111,7 +111,7 @@ int insert_element(user_t *user, char *filepath) {
 		// insert element into leaf (even if into overflow)
 		int i;
 		for (i = node->child_num-1; i > find_result; i--) {
-			sprintf(node->compare[i], "%s", node->compare[i-1]);
+			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
 		sprintf(node->compare[find_result], "../../Data/Users/user_%06d.dat", user->id);
 		node->child_num++;
@@ -147,15 +147,15 @@ int split_page(char *parent_node_path, int child_index) {
 	int i, j, k, l, m, n;
 	// move children to the right to make space for new child
 	for (i = parent_node->child_num; i > child_index+1; i--) {
-		sprintf(parent_node->children[i], "%s", parent_node->children[i-1]);
+		memcpy(parent_node->children[i], parent_node->children[i-1], sizeof(char)*1024);
 	}
 	// move compares to the right to make space for new compare
 	for (j = parent_node->child_num-1; j > child_index+1; j--) {
-		sprintf(parent_node->compare[j], "%s", parent_node->compare[j-1]);
+		memcpy(parent_node->compare[j], parent_node->compare[j-1], sizeof(char)*1024);
 	}
 	// move middle child compare element into the parent compare
 	node_t *child_node = read_node(parent_node->children[child_index]);
-	sprintf(parent_node->compare[child_index], "%s", child_node->compare[child_node->fanout/2]);
+	memcpy(parent_node->compare[child_index], child_node->compare[child_node->fanout/2], sizeof(char)*1024);
 
 	// make new child
 	int new_child_id = get_id();
@@ -176,14 +176,14 @@ int split_page(char *parent_node_path, int child_index) {
 
 	// move right half of previous child to new child
 	for (k = (parent_node->fanout/2)+no_copy_pls, l = 0; k < parent_node->fanout; k++, l++) {
-		sprintf(new_child_node->compare[l], "%s", child_node->compare[k]);
+		memcpy(new_child_node->compare[l], child_node->compare[k], sizeof(char)*1024);
 		// clear the previous child elements (compares) after moving
 		sprintf(child_node->compare[k],"");
 	}
 	if(!child_node->is_leaf) {
 		// moving children to new node
 		for (m = ((parent_node->fanout)/2)+no_copy_pls, n = 0; m < (parent_node->fanout+1); m++, n++) {
-			sprintf(new_child_node->children[n], "%s", rename_node(child_node->children[m], new_child_node->id, n));
+			memcpy(new_child_node->children[n], rename_node(child_node->children[m], new_child_node->id, n), sizeof(char)*1024);
 			sprintf(child_node->children[m],"");
 		}
 	}
@@ -195,7 +195,7 @@ int split_page(char *parent_node_path, int child_index) {
 	// set new child to leaf if other child is leaf
 	new_child_node->is_leaf = child_node->is_leaf;
 
-	sprintf(parent_node->children[child_index+1], "%s", new_child_node->filepath);
+	memcpy(parent_node->children[child_index+1], new_child_node->filepath, sizeof(char)*1024);
 	parent_node->child_num = parent_node->child_num+1;
 
 	write_node(parent_node, parent_node->filepath);
@@ -231,7 +231,7 @@ char* split_root(char *root_path) {
 	new_root_node->is_leaf = false;
 
 	// Give new node middle element of previous root
-	sprintf(new_root_node->compare[0], "%s", root->compare[(root->fanout)/2]);
+	memcpy(new_root_node->compare[0], root->compare[(root->fanout)/2], sizeof(char)*1024);
 
 	// Create new root child node
 	int new_root_child_id = get_id();
@@ -255,7 +255,7 @@ char* split_root(char *root_path) {
 
 	// Move right half of elements from root to new child
 	for (i = ((root->fanout)/2)+no_copy_pls, j = 0; i < root->fanout; i++, j++) {
-		sprintf(new_root_child->compare[j], "%s", root->compare[i]);
+		memcpy(new_root_child->compare[j], root->compare[i], sizeof(char)*1024);
 		// clear the previous child elements (compares) after moving
 		sprintf(root->compare[i], "");
 	}
@@ -263,7 +263,7 @@ char* split_root(char *root_path) {
 	if(!root->is_leaf) {
 		// moving children to new node
 		for (k = ((root->fanout)/2)+no_copy_pls, l = 0; k < root->fanout+1; k++, l++) {
-			sprintf(new_root_child->children[l], "%s", rename_node(root->children[k], new_root_child->id, l));
+			memcpy(new_root_child->children[l], rename_node(root->children[k], new_root_child->id, l), sizeof(char)*1024);
 			sprintf(root->children[k], "");
 		}
 	}
@@ -279,10 +279,10 @@ char* split_root(char *root_path) {
 	// Give previous root new file name, and delete previous name
 	// char* previous_root_filepath = root->filepath;
 	remove(root->filepath);
-	sprintf(root->filepath, "%s", old_root_child_path);
+	memcpy(root->filepath, old_root_child_path, sizeof(char)*1024);
 
-	sprintf(new_root_node->children[0], "%s", old_root_child_path);
-	sprintf(new_root_node->children[1], "%s", new_root_child_path);
+	memcpy(new_root_node->children[0], old_root_child_path, sizeof(char)*1024);
+	memcpy(new_root_node->children[1], new_root_child_path, sizeof(char)*1024);
 	new_root_node->child_num = 2;
 
 	write_node(new_root_node, new_root_node->filepath);

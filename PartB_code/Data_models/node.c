@@ -4,8 +4,7 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	node_t *n = malloc(sizeof(node_t));
 	n->id = id;
 	n->filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	sprintf(n->filepath, "%s", node_path);
-	//n->filepath = node_path;
+	memcpy(n->filepath, node_path, sizeof(char)*1024);
 
 	n->fanout = fanout;
 	n->compare = malloc(sizeof(char *)*(fanout));
