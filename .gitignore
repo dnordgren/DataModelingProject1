@@ -1,4 +1,5 @@
 *.dat
 *.dSYM
 *.plist
+generate_user_tree
 
