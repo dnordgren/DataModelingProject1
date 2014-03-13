@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
 		}
 		free_user(user);
 	}
-
+	
+	free_node(root);
 	return 0;
 }
 
@@ -74,19 +75,19 @@ char* create_new_path(int child_id, int parent_id, int child_index) {
 }
 
 int find_element(char *node_path, user_t *in_user, int min, int max) {
-	node_t *node = read_node(node_path);
-
 	FILE *compare_file;
 	if (max < min) {
 		return min;
 	}
 	else {
+		node_t *node = read_node(node_path);
 		int mid = (max+min)/2;
 		compare_file = fopen(node->compare[mid], "rb");
 		user_t *user = read_user(compare_file);
 
 		int result = cmp(in_user, user);
 
+		free_node(node);
 		free_user(user);
 		fclose(compare_file);
 
@@ -119,6 +120,7 @@ int insert_element(user_t *user, char *filepath) {
 
 		// if leaf has overflowed
 		if (node->fanout+1 == node->child_num) {
+			free_node(node);
 			return -1;
 		}
 	}
@@ -128,6 +130,7 @@ int insert_element(user_t *user, char *filepath) {
 		if (insert_element(user, node->children[find_result]) == -1) {
 			// if current node has overflowed
 			if (split_page(node->filepath, find_result) == -1) {
+				free_node(node);
 				return -1;
 			}
 		}
