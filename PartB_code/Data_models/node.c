@@ -93,7 +93,7 @@ void write_node(node_t *n, char* node_path) {
 char* rename_node(char *filename, int parent_id, int child_index) {
 	node_t *node = read_node(filename);
 	char *new_filename = malloc(sizeof(char)*1024);
-	sprintf(new_filename, "node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
+	sprintf(new_filename, "../../Data/User_Tree/node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
 	remove(node->filepath);
 	node->filepath = new_filename;
 	write_node(node, node->filepath);

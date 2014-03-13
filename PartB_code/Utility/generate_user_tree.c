@@ -165,6 +165,7 @@ int split_page(char *parent_node_path, int child_index) {
 	sprintf(temp, "../../Data/User_Tree/%s", new_child_path);
 	node_t *new_child_node = create_node(parent_node->fanout, temp, new_child_id);
 	free(temp);
+	free(new_child_path);	
 	
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
@@ -223,7 +224,7 @@ char* split_root(char *root_path) {
 	// Create new root node
 	int new_root_id = get_id();
 	char* new_root_filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	sprintf(new_root_filepath, "node_%06d_root.dat", new_root_id);
+	sprintf(new_root_filepath, "../../Data/User_Tree/node_%06d_root.dat", new_root_id);
 
 	char *temp_root = malloc(sizeof(char)*1024);
 	sprintf(temp_root, "../../Data/User_Tree/%s", new_root_filepath);
@@ -241,6 +242,8 @@ char* split_root(char *root_path) {
 	char* temp = malloc(sizeof(char)*1024);
 	sprintf(temp, "../../Data/User_Tree/%s", new_root_child_path);
 	node_t *new_root_child = create_node(new_root_node->fanout, temp, new_root_child_id);
+
+	
 
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
@@ -286,6 +289,9 @@ char* split_root(char *root_path) {
 	write_node(new_root_node, new_root_node->filepath);
 	write_node(root, root->filepath);
 	write_node(new_root_child, new_root_child->filepath);
+
+	free(old_root_child_path);
+	free(new_root_child_path);
 
 	free_node(new_root_node);
 	free_node(root);
