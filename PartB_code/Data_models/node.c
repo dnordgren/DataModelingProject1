@@ -4,8 +4,8 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	node_t *n = malloc(sizeof(node_t));
 	n->id = id;
 	n->filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	//sprintf(n->filepath, "%s", node_path);
-	n->filepath = node_path;
+	sprintf(n->filepath, "%s", node_path);
+	//n->filepath = node_path;
 
 	n->fanout = fanout;
 	n->compare = malloc(sizeof(char *)*(fanout));
@@ -102,14 +102,23 @@ char* rename_node(char *filename, int parent_id, int child_index) {
 
 void free_node(node_t *n) {
 	int i;
-	for (i = 0; i < n->fanout; i++) {
-		free(n->compare[i]);
+	for (i = 0; i < n->child_num-1; i++) {
+		if(n->compare[i] != NULL) {
+			free((void *) n->compare[i]);
+			n->compare[i] = NULL;
+		}
 	}
-	for (i = 0; i < n->fanout+1; i++) {
-		free(n->children[i]);
+	for (i = 0; i < n->child_num; i++) {
+		if(n->children[i] != NULL) {
+			free((void *) n->children[i]);
+			n->children[i]= NULL;
+		}
 	}
 	free(n->right_sibling);
 	free(n->left_sibling);
 	free(n->children);
 	free(n->compare);
+	//free(n->filepath);
+	//n->filepath = NULL;
+	free(n);
 }
