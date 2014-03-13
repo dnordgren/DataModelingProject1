@@ -201,6 +201,10 @@ int split_page(char *parent_node_path, int child_index) {
 	memcpy(parent_node->children[child_index+1], new_child_node->filepath, sizeof(char)*1024);
 	parent_node->child_num = parent_node->child_num+1;
 
+	// move siblings to new node
+	memcpy(child_node->right_sibling, new_child_node->filepath, sizeof(char)*1024);
+	memcpy(new_child_node->left_sibling, child_node->filepath, sizeof(char)*1024);
+
 	write_node(parent_node, parent_node->filepath);
 	write_node(child_node, child_node->filepath);
 	write_node(new_child_node, new_child_node->filepath);
@@ -245,8 +249,6 @@ char* split_root(char *root_path) {
 	sprintf(temp, "../../Data/User_Tree/%s", new_root_child_path);
 	node_t *new_root_child = create_node(new_root_node->fanout, temp, new_root_child_id);
 
-	
-
 	// checking if value should be copied up
 	// value only needs to be copied up if leaf
 	// TODO : get fancy
@@ -287,6 +289,10 @@ char* split_root(char *root_path) {
 	memcpy(new_root_node->children[0], old_root_child_path, sizeof(char)*1024);
 	memcpy(new_root_node->children[1], new_root_child_path, sizeof(char)*1024);
 	new_root_node->child_num = 2;
+	
+	// move siblings to new node
+	memcpy(root->right_sibling, new_root_child->filepath, sizeof(char)*1024);
+	memcpy(new_root_child->left_sibling, root->filepath, sizeof(char)*1024);
 
 	write_node(new_root_node, new_root_node->filepath);
 	write_node(root, root->filepath);
