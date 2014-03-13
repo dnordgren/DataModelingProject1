@@ -7,6 +7,8 @@
 #include <string.h>
 
 #include "user.h"
+#include "../../Code/Data_models/location.h"
+#include "../../Code/Data_models/message.h"
 
 #define FILENAME_LENGTH 1024
 

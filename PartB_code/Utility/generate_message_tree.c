@@ -5,12 +5,12 @@
 int compare_option, id_counter;
 
 char* create_new_path(int child_id, int parent_id, int child_index);
-int find_element(char *node_path, user_t *in_user, int min, int max);
-int insert_element(user_t *user, char *filepath);
+int find_element(char *node_path, message_t *in_message, int min, int max);
+int insert_element(message_t *message, char *filepath);
 int get_id();
 int split_page(char *parent_node_path, int child_index);
 char* split_root(char *root_path);
-int cmp(user_t *user_1, user_t *user_2);
+int cmp(message_t *message_1, message_t *message_2);
 
 int main(int argc, char **argv) {
 	if (argc != 4) {
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
       mkdir(filename, 0700);
     }
 
-    sprintf(filename, "../../Data/User_Tree");
+    sprintf(filename, "../../Data/Message_Tree");
 
     if (stat(filename, &st) == -1) {
       mkdir(filename, 0700);
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     gettimeofday(&time_start, NULL);
 
 	// create the root node
-	node_t *root = create_node(fanout, "../../Data/User_Tree/node_000000_root.dat", 0);
+	node_t *root = create_node(fanout, "../../Data/Message_Tree/node_000000_root.dat", 0);
 	root->is_leaf = true;
 	root->child_num = 1;
 	write_node(root, root->filepath);
@@ -57,16 +57,16 @@ int main(int argc, char **argv) {
 		if(i%100 == 0)
 			printf("%i\n", i);
 
-		sprintf(filename, "../../Data/Users/user_%06d.dat", i);
+		sprintf(filename, "../../Data/Messages/message_%06d.dat", i);
 		FILE *infile = fopen(filename, "rb");
-		user_t *user = read_user(infile);
+		message_t *message = read_message(infile);
 		fclose(infile);
 
-		if (insert_element(user, root->filepath) == -1) {
+		if (insert_element(message, root->filepath) == -1) {
 			//Handle case for splitting root node
 			root->filepath = split_root(root->filepath);
 		}
-		free_user(user);
+		free_message(message);
 	}
 	
 	free_node(root);
@@ -88,7 +88,7 @@ char* create_new_path(int child_id, int parent_id, int child_index) {
 	return filepath;
 }
 
-int find_element(char *node_path, user_t *in_user, int min, int max) {
+int find_element(char *node_path, message_t *in_message, int min, int max) {
 	FILE *compare_file;
 	if (max < min) {
 		return min;
@@ -97,19 +97,19 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 		node_t *node = read_node(node_path);
 		int mid = (max+min)/2;
 		compare_file = fopen(node->compare[mid], "rb");
-		user_t *user = read_user(compare_file);
+		message_t *message = read_message(compare_file);
 
-		int result = cmp(in_user, user);
+		int result = cmp(in_message, message);
 
 		free_node(node);
-		free_user(user);
+		free_message(message);
 		fclose(compare_file);
 
 		if (result == -1) {
-			return find_element(node_path, in_user, min, mid-1);
+			return find_element(node_path, in_message, min, mid-1);
 		}
 		else if (result == 1) {
-			return find_element(node_path, in_user, mid+1, max);
+			return find_element(node_path, in_message, mid+1, max);
 		}
 		// B+ tree defined to say matches go into right child
 		else {
@@ -118,9 +118,9 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 	}
 }
 
-int insert_element(user_t *user, char *filepath) {
+int insert_element(message_t *message, char *filepath) {
 	node_t *node = read_node(filepath);
-    int find_result = find_element(filepath, user, 0, node->child_num-2);
+    int find_result = find_element(filepath, message, 0, node->child_num-2);
 	// if current node is a leaf
 	if (node->is_leaf) {
 		// insert element into leaf (even if into overflow)
@@ -128,7 +128,7 @@ int insert_element(user_t *user, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Users/user_%06d.dat", user->id);
+		sprintf(node->compare[find_result], "../../Data/Messages/message_%06d.dat", message->id);
 		node->child_num++;
 		write_node(node, node->filepath);
 
@@ -141,7 +141,7 @@ int insert_element(user_t *user, char *filepath) {
 	// not a leaf
 	else {
 		// if child has overflowed
-		if (insert_element(user, node->children[find_result]) == -1) {
+		if (insert_element(message, node->children[find_result]) == -1) {
 			// if current node has overflowed
 			if (split_page(node->filepath, find_result) == -1) {
 				free_node(node);
@@ -326,11 +326,11 @@ char* split_root(char *root_path) {
 //
 // }
 
-int cmp(user_t *user_1, user_t *user_2) {
+int cmp(message_t *message_1, message_t *message_2) {
 	switch(compare_option) {
-	    case 0 : return (user_1->id)>(user_2->id)? 1:( (user_1->id)<(user_2->id) ? -1:0 );
-	    case 1 : return (user_1->locationID)>(user_2->locationID)? 1:( (user_1->locationID)<(user_2->locationID) ? -1:0 );
-	    case 2 : return (user_1->message_num)>(user_2->message_num)? 1:( (user_1->message_num)<(user_2->message_num) ? -1:0 );
+	    case 0 : return (message_1->id)>(message_2->id)? 1:( (message_1->id)<(message_2->id) ? -1:0 );
+	    case 1 : return (message_1->locationID)>(message_2->locationID)? 1:( (message_1->locationID)<(message_2->locationID) ? -1:0 );
+	    case 2 : return (message_1->message_num)>(message_2->message_num)? 1:( (message_1->message_num)<(message_2->message_num) ? -1:0 );
 	}
 
 	return 0;

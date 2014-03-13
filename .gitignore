@@ -3,5 +3,7 @@
 *.plist
 generate_tables
 generate_user_tree
+generate_message_tree
+generate_location_tree
 Records/
 
