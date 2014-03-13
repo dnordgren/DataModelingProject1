@@ -95,6 +95,7 @@ char* rename_node(char *filename, int parent_id, int child_index) {
 	char *new_filename = malloc(sizeof(char)*1024);
 	sprintf(new_filename, "../../Data/User_Tree/node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
 	remove(node->filepath);
+	free(node->filepath);
 	node->filepath = new_filename;
 	write_node(node, node->filepath);
 	free_node(node);
@@ -103,23 +104,20 @@ char* rename_node(char *filename, int parent_id, int child_index) {
 
 void free_node(node_t *n) {
 	int i;
-	for (i = 0; i < n->child_num-1; i++) {
+	for (i = 0; i < n->fanout; i++) {
 		if(n->compare[i] != NULL) {
 			free((void *) n->compare[i]);
-			n->compare[i] = NULL;
 		}
 	}
-	for (i = 0; i < n->child_num; i++) {
+	for (i = 0; i < n->fanout+1; i++) {
 		if(n->children[i] != NULL) {
 			free((void *) n->children[i]);
-			n->children[i]= NULL;
 		}
 	}
 	free(n->right_sibling);
 	free(n->left_sibling);
 	free(n->children);
 	free(n->compare);
-	//free(n->filepath);
-	//n->filepath = NULL;
+	free(n->filepath);
 	free(n);
 }

@@ -69,7 +69,6 @@ int main(int argc, char **argv) {
 
 char* create_new_path(int child_id, int parent_id, int child_index) {
 	char *filepath = malloc(sizeof(char)*1024);
-	// TODO 
 	sprintf(filepath, "../../Data/User_Tree/node_%06d_%06d_%06d.dat", child_id, parent_id, child_index);
 	return filepath;
 }
@@ -313,3 +312,4 @@ int cmp(user_t *user_1, user_t *user_2) {
 
 	return 0;
 }
+
