@@ -167,7 +167,7 @@ int split_page(char *parent_node_path, int child_index) {
 		memcpy(parent_node->children[i], parent_node->children[i-1], sizeof(char)*1024);
 	}
 	// move compares to the right to make space for new compare
-	for (j = parent_node->child_num-1; j > child_index+1; j--) {
+	for (j = parent_node->child_num-1; j > child_index; j--) {
 		memcpy(parent_node->compare[j], parent_node->compare[j-1], sizeof(char)*1024);
 	}
 	// move middle child compare element into the parent compare
