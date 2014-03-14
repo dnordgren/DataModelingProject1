@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     gettimeofday(&time_start, NULL);
 
 	// create the root node
-	node_t *root = create_node(fanout, "../../Data/User_Tree/node_000000_root.dat", 0);
+	node_t *root = create_node(fanout, "../../Data/Location_Tree/node_000000_root.dat", 0);
 	root->is_leaf = true;
 	root->child_num = 1;
 	write_node(root, root->filepath);
