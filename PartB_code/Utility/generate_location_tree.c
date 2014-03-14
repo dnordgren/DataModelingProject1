@@ -4,7 +4,7 @@
 
 int compare_option, id_counter;
 
-char* create_new_path(int child_id, int parent_id, int child_index);
+char* create_new_path(int child_id);
 int find_element(char *node_path, location_t *in_location, int min, int max);
 int insert_element(location_t *location, char *filepath);
 int get_id();
@@ -82,9 +82,9 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-char* create_new_path(int child_id, int parent_id, int child_index) {
+char* create_new_path(int child_id) {
 	char *filepath = malloc(sizeof(char)*1024);
-	sprintf(filepath, "../../Data/Location_Tree/node_%06d_%06d_%06d.dat", child_id, parent_id, child_index);
+	sprintf(filepath, "../../Data/Location_Tree/node_%06d.dat", child_id);
 	return filepath;
 }
 
@@ -176,7 +176,7 @@ int split_page(char *parent_node_path, int child_index) {
 
 	// make new child
 	int new_child_id = get_id();
-	char *new_child_path = create_new_path(new_child_id, parent_node->id, child_index+1);
+	char *new_child_path = create_new_path(new_child_id);
 	char *temp = malloc(sizeof(char)*1024);
 	sprintf(temp, "%s", new_child_path);
 	node_t *new_child_node = create_node(parent_node->fanout, temp, new_child_id);
@@ -256,8 +256,8 @@ char* split_root(char *root_path) {
 
 	// Create new root child node
 	int new_root_child_id = get_id();
-	char *new_root_child_path = create_new_path(new_root_child_id, new_root_node->id, 1);
-	char *old_root_child_path = create_new_path(root->id, new_root_node->id, 0);
+	char *new_root_child_path = create_new_path(new_root_child_id);
+	char *old_root_child_path = create_new_path(root->id);
 
 	char* temp = malloc(sizeof(char)*1024);
 	sprintf(temp, "%s", new_root_child_path);
@@ -339,7 +339,7 @@ int cmp(location_t *location_1, location_t *location_2) {
 char* rename_node(char *filename, int parent_id, int child_index) {
 	node_t *node = read_node(filename);
 	char *new_filename = malloc(sizeof(char)*1024);
-	sprintf(new_filename, "../../Data/Location_Tree/node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
+	sprintf(new_filename, "../../Data/Location_Tree/node_%06d.dat", node->id);
 	remove(node->filepath);
 	free(node->filepath);
 	node->filepath = new_filename;
