@@ -3,7 +3,7 @@
 #include <sys/times.h>
 #include <string.h>
 
-#include "../Data_Models/location.h"
+#include "../Data_models/location.h"
 
 int comparison;
 

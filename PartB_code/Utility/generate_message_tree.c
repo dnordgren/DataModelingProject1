@@ -6,7 +6,7 @@ int compare_option, id_counter;
 
 char* create_new_path(int child_id);
 int find_element(char *node_path, message_t *in_message, int min, int max);
-int insert_element(message_t *message, char *filepath);
+int insert_element(char *message_path, char *filepath);
 int get_id();
 int split_page(char *parent_node_path, int child_index);
 char* split_root(char *root_path);
@@ -23,24 +23,23 @@ int main(int argc, char **argv) {
 
 	sprintf(filename, "../../Data");
 
-    if (stat(filename, &st) == -1) {
-      mkdir(filename, 0700);
-    }
+	if (stat(filename, &st) == -1) {
+		mkdir(filename, 0700);
+	}
 
-    sprintf(filename, "../../Data/Message_Tree");
+	sprintf(filename, "../../Data/Message_Tree");
 
-    if (stat(filename, &st) == -1) {
-      mkdir(filename, 0700);
-    }
+	if (stat(filename, &st) == -1) {
+		mkdir(filename, 0700);
+	}
 
 	int total_record_number = atoi(argv[1]);
 	compare_option = atoi(argv[2]);
 	int fanout = atoi(argv[3]);
 
-    struct timeval time_start, time_end;
-
-    // start time
-    gettimeofday(&time_start, NULL);
+	struct timeval time_start, time_end;
+	// start time
+	gettimeofday(&time_start, NULL);
 
 	// create the root node
 	node_t *root = create_node(fanout, "../../Data/Message_Tree/node_000000_root.dat", 0);
@@ -58,26 +57,22 @@ int main(int argc, char **argv) {
 			printf("%i\n", i);
 
 		sprintf(filename, "../../Data/Messages/message_%07d.dat", i);
-		FILE *infile = fopen(filename, "rb");
-		message_t *message = read_message(infile);
-		fclose(infile);
 
-		if (insert_element(message, root->filepath) == -1) {
+		if (insert_element(&filename[0], root->filepath) == -1) {
 			//Handle case for splitting root node
 			root->filepath = split_root(root->filepath);
 		}
-		free_message(message);
 	}
 	
 	free_node(root);
 	
-    // end time
-    gettimeofday(&time_end, NULL);
+	// end time
+	gettimeofday(&time_end, NULL);
 
-    float totaltime = (time_end.tv_sec - time_start.tv_sec)
-    + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
+	float totaltime = (time_end.tv_sec - time_start.tv_sec)
+	+ (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
-    printf("\n\nProcess time %f seconds\n", totaltime);
+	printf("\n\nProcess time %f seconds\n", totaltime);
 	
 	return 0;
 }
@@ -105,10 +100,10 @@ int find_element(char *node_path, message_t *in_message, int min, int max) {
 		free_message(message);
 		fclose(compare_file);
 
-		if (result == -1) {
+		if (result < 0) {
 			return find_element(node_path, in_message, min, mid-1);
 		}
-		else if (result == 1) {
+		else if (result > 0) {
 			return find_element(node_path, in_message, mid+1, max);
 		}
 		// B+ tree defined to say matches go into right child
@@ -118,9 +113,12 @@ int find_element(char *node_path, message_t *in_message, int min, int max) {
 	}
 }
 
-int insert_element(message_t *message, char *filepath) {
+int insert_element(char *message_path, char *filepath) {
+	FILE *infile = fopen(message_path, "rb");
+	message_t *message = read_message(infile);
+	fclose(infile);
 	node_t *node = read_node(filepath);
-    int find_result = find_element(filepath, message, 0, node->child_num-2);
+    	int find_result = find_element(filepath, message, 0, node->child_num-2);
 	// if current node is a leaf
 	if (node->is_leaf) {
 		// insert element into leaf (even if into overflow)
@@ -128,27 +126,30 @@ int insert_element(message_t *message, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Messages/message_%07d.dat", message->messageID);
+		memcpy(node->compare[find_result], message_path, FILENAME_LENGTH);
 		node->child_num++;
 		write_node(node, node->filepath);
 
 		// if leaf has overflowed
 		if (node->fanout+1 == node->child_num) {
 			free_node(node);
+			free_message(message);
 			return -1;
 		}
 	}
 	// not a leaf
 	else {
 		// if child has overflowed
-		if (insert_element(message, node->children[find_result]) == -1) {
+		if (insert_element(message_path, node->children[find_result]) == -1) {
 			// if current node has overflowed
 			if (split_page(node->filepath, find_result) == -1) {
+				free_message(message);
 				free_node(node);
 				return -1;
 			}
 		}
 	}
+	free_message(message);
 	free_node(node);
 	return 0;
 }
@@ -216,6 +217,7 @@ int split_page(char *parent_node_path, int child_index) {
 	parent_node->child_num = parent_node->child_num+1;
 
 	// move siblings to new node
+	memcpy(new_child_node->right_sibling, child_node->right_sibling, sizeof(char)*1024);
 	memcpy(child_node->right_sibling, new_child_node->filepath, sizeof(char)*1024);
 	memcpy(new_child_node->left_sibling, child_node->filepath, sizeof(char)*1024);
 
@@ -255,10 +257,9 @@ char* split_root(char *root_path) {
 	memcpy(new_root_node->compare[0], root->compare[(root->fanout)/2], sizeof(char)*1024);
 
 	// Create new root child node
+	char *old_root_child_path = create_new_path(root->id);
 	int new_root_child_id = get_id();
 	char *new_root_child_path = create_new_path(new_root_child_id);
-	char *old_root_child_path = create_new_path(root->id);
-
 	char* temp = malloc(sizeof(char)*1024);
 	sprintf(temp, "%s", new_root_child_path);
 	node_t *new_root_child = create_node(new_root_node->fanout, temp, new_root_child_id);
@@ -291,7 +292,6 @@ char* split_root(char *root_path) {
 	root->child_num = (root->fanout)/2+1;
 	new_root_child->child_num = (root->fanout+1) - ((root->fanout/2)+1)-no_copy_pls+1;
 
-
 	// New root child has same leaf property as previous root
 	new_root_child->is_leaf = root->is_leaf;
 
@@ -305,6 +305,7 @@ char* split_root(char *root_path) {
 	new_root_node->child_num = 2;
 	
 	// move siblings to new node
+	memcpy(new_root_child->right_sibling, root->right_sibling, sizeof(char)*1024);
 	memcpy(root->right_sibling, new_root_child->filepath, sizeof(char)*1024);
 	memcpy(new_root_child->left_sibling, root->filepath, sizeof(char)*1024);
 

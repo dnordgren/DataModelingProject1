@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 	}
 
 	int matching_records = 0;
-	char* match_string = "Nebraska";
+	char* match_string = "Alabama";
 
 	// TODO timing functions
 
@@ -27,8 +27,8 @@ int main(int argc, char** argv) {
 		for (i = 0; i < left_edge_node->fanout-1; ++i) {
 			FILE *infile = fopen(left_edge_node->compare[i], "rb");
 			location_t* location = read_location(infile);
-			if (strcmp(location->state, "Nebraska") == 0) {
-                matching_records++;
+			if (strcmp(location->state, match_string) == 0) {
+
 				printf("%s, %s\n", location->city, location->state);
 			}
 			fclose(infile);

@@ -6,7 +6,7 @@ int compare_option, id_counter;
 
 char* create_new_path(int child_id);
 int find_element(char *node_path, user_t *in_user, int min, int max);
-int insert_element(user_t *user, char *filepath);
+int insert_element(char *user_path, char *filepath);
 int get_id();
 int split_page(char *parent_node_path, int child_index);
 char* split_root(char *root_path);
@@ -23,24 +23,24 @@ int main(int argc, char **argv) {
 
 	sprintf(filename, "../../Data");
 
-    if (stat(filename, &st) == -1) {
-      mkdir(filename, 0700);
-    }
+	if (stat(filename, &st) == -1) {
+		mkdir(filename, 0700);
+	}
 
-    sprintf(filename, "../../Data/User_Tree");
+	sprintf(filename, "../../Data/User_Tree");
 
-    if (stat(filename, &st) == -1) {
-      mkdir(filename, 0700);
-    }
+	if (stat(filename, &st) == -1) {
+		mkdir(filename, 0700);
+	}
 
 	int total_record_number = atoi(argv[1]);
 	compare_option = atoi(argv[2]);
 	int fanout = atoi(argv[3]);
 
-    struct timeval time_start, time_end;
+	struct timeval time_start, time_end;
 
-    // start time
-    gettimeofday(&time_start, NULL);
+	// start time
+	gettimeofday(&time_start, NULL);
 
 	// create the root node
 	node_t *root = create_node(fanout, "../../Data/User_Tree/node_000000_root.dat", 0);
@@ -58,26 +58,22 @@ int main(int argc, char **argv) {
 			printf("%i\n", i);
 
 		sprintf(filename, "../../Data/Users/user_%06d.dat", i);
-		FILE *infile = fopen(filename, "rb");
-		user_t *user = read_user(infile);
-		fclose(infile);
 
-		if (insert_element(user, root->filepath) == -1) {
+		if (insert_element(&filename[0], root->filepath) == -1) {
 			//Handle case for splitting root node
 			root->filepath = split_root(root->filepath);
 		}
-		free_user(user);
 	}
 
 	free_node(root);
 
-    // end time
-    gettimeofday(&time_end, NULL);
+	// end timei
+	gettimeofday(&time_end, NULL);
 
-    float totaltime = (time_end.tv_sec - time_start.tv_sec)
-    + (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
+	float totaltime = (time_end.tv_sec - time_start.tv_sec)
+	+ (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
-    printf("\n\nProcess time %f seconds\n", totaltime);
+	printf("\n\nProcess time %f seconds\n", totaltime);
 
 	return 0;
 }
@@ -105,10 +101,10 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 		free_user(user);
 		fclose(compare_file);
 
-		if (result == -1) {
+		if (result < 0) {
 			return find_element(node_path, in_user, min, mid-1);
 		}
-		else if (result == 1) {
+		else if (result > 0) {
 			return find_element(node_path, in_user, mid+1, max);
 		}
 		// B+ tree defined to say matches go into right child
@@ -118,9 +114,12 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 	}
 }
 
-int insert_element(user_t *user, char *filepath) {
+int insert_element(char *user_path, char *filepath) {
+	FILE *infile = fopen(user_path, "rb");
+	user_t *user = read_user(infile);
+	fclose(infile);
 	node_t *node = read_node(filepath);
-    int find_result = find_element(filepath, user, 0, node->child_num-2);
+	int find_result = find_element(filepath, user, 0, node->child_num-2);
 	// if current node is a leaf
 	if (node->is_leaf) {
 		// insert element into leaf (even if into overflow)
@@ -128,28 +127,31 @@ int insert_element(user_t *user, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Users/user_%06d.dat", user->id);
+		memcpy(node->compare[find_result], user_path, sizeof(char)*FILENAME_LENGTH);
 		node->child_num++;
 		write_node(node, node->filepath);
 
 		// if leaf has overflowed
 		if (node->fanout+1 == node->child_num) {
 			free_node(node);
+			free_user(user);
 			return -1;
 		}
 	}
 	// not a leaf
 	else {
 		// if child has overflowed
-		if (insert_element(user, node->children[find_result]) == -1) {
+		if (insert_element(user_path, node->children[find_result]) == -1) {
 			// if current node has overflowed
 			if (split_page(node->filepath, find_result) == -1) {
 				free_node(node);
+				free_user(user);
 				return -1;
 			}
 		}
 	}
 	free_node(node);
+	free_user(user);
 	return 0;
 }
 
@@ -216,6 +218,7 @@ int split_page(char *parent_node_path, int child_index) {
 	parent_node->child_num = parent_node->child_num+1;
 
 	// move siblings to new node
+	memcpy(new_child_node->right_sibling, child_node->right_sibling, sizeof(char)*1024);
 	memcpy(child_node->right_sibling, new_child_node->filepath, sizeof(char)*1024);
 	memcpy(new_child_node->left_sibling, child_node->filepath, sizeof(char)*1024);
 
@@ -305,6 +308,7 @@ char* split_root(char *root_path) {
 	new_root_node->child_num = 2;
 
 	// move siblings to new node
+	memcpy(new_root_child->right_sibling, root->right_sibling, sizeof(char)*1024);
 	memcpy(root->right_sibling, new_root_child->filepath, sizeof(char)*1024);
 	memcpy(new_root_child->left_sibling, root->filepath, sizeof(char)*1024);
 

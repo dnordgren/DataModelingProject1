@@ -6,7 +6,7 @@ int compare_option, id_counter;
 
 char* create_new_path(int child_id);
 int find_element(char *node_path, location_t *in_location, int min, int max);
-int insert_element(location_t *location, char *filepath);
+int insert_element(char *location_path, char *filepath);
 int get_id();
 int split_page(char *parent_node_path, int child_index);
 char* split_root(char *root_path);
@@ -58,15 +58,11 @@ int main(int argc, char **argv) {
 			printf("%i\n", i);
 
 		sprintf(filename, "../../Data/Locations/location_%06d.dat", i);
-		FILE *infile = fopen(filename, "rb");
-		location_t *location = read_location(infile);
-		fclose(infile);
 
-		if (insert_element(location, root->filepath) == -1) {
+		if (insert_element(&filename[0], root->filepath) == -1) {
 			//Handle case for splitting root node
 			root->filepath = split_root(root->filepath);
 		}
-		free_location(location);
 	}
 
 	free_node(root);
@@ -105,10 +101,10 @@ int find_element(char *node_path, location_t *in_location, int min, int max) {
 		free_location(location);
 		fclose(compare_file);
 
-		if (result == -1) {
+		if (result < 0) {
 			return find_element(node_path, in_location, min, mid-1);
 		}
-		else if (result == 1) {
+		else if (result > 0) {
 			return find_element(node_path, in_location, mid+1, max);
 		}
 		// B+ tree defined to say matches go into right child
@@ -118,9 +114,13 @@ int find_element(char *node_path, location_t *in_location, int min, int max) {
 	}
 }
 
-int insert_element(location_t *location, char *filepath) {
+int insert_element(char *location_path, char *filepath) {
 	node_t *node = read_node(filepath);
-    int find_result = find_element(filepath, location, 0, node->child_num-2);
+	FILE *infile = fopen(location_path, "rb");
+	location_t *location = read_location(infile);
+	fclose(infile);
+
+	int find_result = find_element(filepath, location, 0, node->child_num-2);
 	// if current node is a leaf
 	if (node->is_leaf) {
 		// insert element into leaf (even if into overflow)
@@ -128,27 +128,30 @@ int insert_element(location_t *location, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Locations/location_%06d.dat", location->locationID);
+		memcpy(node->compare[find_result], location_path, FILENAME_LENGTH);
 		node->child_num++;
 		write_node(node, node->filepath);
-
+		printf("insert %s into node %i into the %i spot", location->state, node->id, find_result);
 		// if leaf has overflowed
 		if (node->fanout+1 == node->child_num) {
 			free_node(node);
+			free_location(location);
 			return -1;
 		}
 	}
 	// not a leaf
 	else {
 		// if child has overflowed
-		if (insert_element(location, node->children[find_result]) == -1) {
+		if (insert_element(location_path, node->children[find_result]) == -1) {
 			// if current node has overflowed
 			if (split_page(node->filepath, find_result) == -1) {
 				free_node(node);
+				free_location(location);
 				return -1;
 			}
 		}
 	}
+	free_location(location);
 	free_node(node);
 	return 0;
 }
@@ -216,6 +219,7 @@ int split_page(char *parent_node_path, int child_index) {
 	parent_node->child_num = parent_node->child_num+1;
 
 	// move siblings to new node
+	memcpy(new_child_node->right_sibling, child_node->right_sibling, sizeof(char)*1024);
 	memcpy(child_node->right_sibling, new_child_node->filepath, sizeof(char)*1024);
 	memcpy(new_child_node->left_sibling, child_node->filepath, sizeof(char)*1024);
 
@@ -305,6 +309,7 @@ char* split_root(char *root_path) {
 	new_root_node->child_num = 2;
 
 	// move siblings to new node
+	memcpy(new_root_child->right_sibling, root->right_sibling, sizeof(char)*1024);
 	memcpy(root->right_sibling, new_root_child->filepath, sizeof(char)*1024);
 	memcpy(new_root_child->left_sibling, root->filepath, sizeof(char)*1024);
 
