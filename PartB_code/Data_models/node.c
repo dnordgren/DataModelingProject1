@@ -4,8 +4,7 @@ node_t* create_node(int fanout, char *node_path, int id) {
 	node_t *n = malloc(sizeof(node_t));
 	n->id = id;
 	n->filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	sprintf(n->filepath, "%s", node_path);
-	//n->filepath = node_path;
+	memcpy(n->filepath, node_path, sizeof(char)*1024);
 
 	n->fanout = fanout;
 	n->compare = malloc(sizeof(char *)*(fanout));
@@ -90,35 +89,22 @@ void write_node(node_t *n, char* node_path) {
 	fclose(outfile);
 }
 
-char* rename_node(char *filename, int parent_id, int child_index) {
-	node_t *node = read_node(filename);
-	char *new_filename = malloc(sizeof(char)*1024);
-	sprintf(new_filename, "node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
-	remove(node->filepath);
-	node->filepath = new_filename;
-	write_node(node, node->filepath);
-	return new_filename;
-}
-
 void free_node(node_t *n) {
 	int i;
-	for (i = 0; i < n->child_num-1; i++) {
+	for (i = 0; i < n->fanout; i++) {
 		if(n->compare[i] != NULL) {
 			free((void *) n->compare[i]);
-			n->compare[i] = NULL;
 		}
 	}
-	for (i = 0; i < n->child_num; i++) {
+	for (i = 0; i < n->fanout+1; i++) {
 		if(n->children[i] != NULL) {
 			free((void *) n->children[i]);
-			n->children[i]= NULL;
 		}
 	}
 	free(n->right_sibling);
 	free(n->left_sibling);
 	free(n->children);
 	free(n->compare);
-	//free(n->filepath);
-	//n->filepath = NULL;
+	free(n->filepath);
 	free(n);
 }

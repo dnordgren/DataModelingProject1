@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/times.h>
 
-#include "user.h"
+#include "../Data_models/user.h"
 
 int comparison;
 

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/times.h>
 
-#include "location.h"
+#include "../Data_models/location.h"
 
 
 int main(int argc, char **argv)
