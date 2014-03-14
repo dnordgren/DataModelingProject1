@@ -347,3 +347,15 @@ int cmp(message_t *message_1, message_t *message_2) {
 
 	return 0;
 }
+
+char* rename_node(char *filename, int parent_id, int child_index) {
+	node_t *node = read_node(filename);
+	char *new_filename = malloc(sizeof(char)*1024);
+	sprintf(new_filename, "../../Data/Message_Tree/node_%06d_%06d_%06d.dat", node->id, parent_id, child_index);
+	remove(node->filepath);
+	free(node->filepath);
+	node->filepath = new_filename;
+	write_node(node, node->filepath);
+	free_node(node);
+	return new_filename;
+}
