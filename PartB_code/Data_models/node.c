@@ -89,6 +89,21 @@ void write_node(node_t *n, char* node_path) {
 	fclose(outfile);
 }
 
+void print_node(node_t *n) {
+	printf("\nFilepath: %s\n", n->filepath);
+	printf("Child_num: %i\n", n->child_num);
+	int i;
+	for(i = 0; i < n->fanout; i++) {
+		printf("Compare %i: %s\n", i, n->compare[i]);
+	}
+	for(i = 0; i < n->fanout+1; i++) {
+		printf("Child %i: %s\n", i, n->children[i]);
+	}
+	printf("Right sib: %s\n", n->right_sibling);
+	printf("Left sib: %s\n", n->left_sibling);
+	printf("Is leaf? %i\n\n", n->is_leaf);
+}
+
 void free_node(node_t *n) {
 	int i;
 	for (i = 0; i < n->fanout; i++) {

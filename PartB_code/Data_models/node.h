@@ -44,4 +44,6 @@ char* rename_node(char *filename, int parent_id, int child_index);
 // write a node to a file
 void write_node(node_t *n, char* node_path);
 
+// print a nodes values
+void print_node(node_t *n);
 #endif
