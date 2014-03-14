@@ -128,7 +128,7 @@ int insert_element(location_t *location, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Locations/location_%06d.dat", location->id);
+		sprintf(node->compare[find_result], "../../Data/Locations/location_%06d.dat", location->locationID);
 		node->child_num++;
 		write_node(node, node->filepath);
 
@@ -327,11 +327,11 @@ char* split_root(char *root_path) {
 // }
 
 int cmp(location_t *location_1, location_t *location_2) {
-	switch(compare_option) {
-	    case 0 : return (location_1->id)>(location_2->id)? 1:( (location_1->id)<(location_2->id) ? -1:0 );
-	    case 1 : return (location_1->locationID)>(location_2->locationID)? 1:( (location_1->locationID)<(location_2->locationID) ? -1:0 );
-	    case 2 : return (location_1->message_num)>(location_2->message_num)? 1:( (location_1->message_num)<(location_2->message_num) ? -1:0 );
-	}
+    switch(compare_option)
+    {
+      case 0 : return strcmp(location_1->state,location_2->state);
+      case 1 : return (location_1->locationID)>(location_2->locationID)? 1:( (location_1->locationID)<(location_2->locationID) ? -1:0 );
+    }
 
-	return 0;
+    return 0;
 }

@@ -128,7 +128,7 @@ int insert_element(message_t *message, char *filepath) {
 		for (i = node->child_num-1; i > find_result; i--) {
 			memcpy(node->compare[i], node->compare[i-1], sizeof(char)*1024);
 		}
-		sprintf(node->compare[find_result], "../../Data/Messages/message_%06d.dat", message->id);
+		sprintf(node->compare[find_result], "../../Data/Messages/message_%06d.dat", message->messageID);
 		node->child_num++;
 		write_node(node, node->filepath);
 
@@ -327,10 +327,22 @@ char* split_root(char *root_path) {
 // }
 
 int cmp(message_t *message_1, message_t *message_2) {
+	long minutes1, minutes2;
+	
 	switch(compare_option) {
-	    case 0 : return (message_1->id)>(message_2->id)? 1:( (message_1->id)<(message_2->id) ? -1:0 );
-	    case 1 : return (message_1->locationID)>(message_2->locationID)? 1:( (message_1->locationID)<(message_2->locationID) ? -1:0 );
-	    case 2 : return (message_1->message_num)>(message_2->message_num)? 1:( (message_1->message_num)<(message_2->message_num) ? -1:0 );
+	    case 0 :
+	      minutes1 = (message_1->year * 525949) + (message_1->month * 43829) + (message_1->day * 1440) + (message_1->hour * 60) + message_1->minute;
+	      minutes2 = (message_2->year * 525949) + (message_2->month * 43829) + (message_2->day * 1440) + (message_2->hour * 60) + message_2->minute;
+	      return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
+	    
+		case 1 :
+	      minutes1 = (message_1->hour * 60) + message_1->minute;
+	      minutes2 = (message_2->hour * 60) + message_2->minute;
+	      return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
+
+	    case 2 : return (message_1->messageID)>(message_2->messageID)? 1:( (message_1->messageID)<(message_2->messageID) ? -1:0 );
+	    
+		case 3 : return (message_1->userID)>(message_2->userID)? 1:( (message_1->userID)<(message_2->userID) ? -1:0 );
 	}
 
 	return 0;
