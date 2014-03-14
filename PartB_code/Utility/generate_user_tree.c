@@ -109,7 +109,7 @@ int find_element(char *node_path, user_t *in_user, int min, int max) {
 		}
 		// B+ tree defined to say matches go into right child
 		else {
-			return min;
+			return mid;
 		}
 	}
 }

@@ -109,7 +109,7 @@ int find_element(char *node_path, location_t *in_location, int min, int max) {
 		}
 		// B+ tree defined to say matches go into right child
 		else {
-			return min;
+			return mid;
 		}
 	}
 }
@@ -131,7 +131,6 @@ int insert_element(char *location_path, char *filepath) {
 		memcpy(node->compare[find_result], location_path, FILENAME_LENGTH);
 		node->child_num++;
 		write_node(node, node->filepath);
-		printf("insert %s into node %i into the %i spot", location->state, node->id, find_result);
 		// if leaf has overflowed
 		if (node->fanout+1 == node->child_num) {
 			free_node(node);
@@ -163,7 +162,6 @@ int get_id() {
 int split_page(char *parent_node_path, int child_index) {
 	node_t *parent_node = read_node(parent_node_path);
 	parent_node->is_leaf = false;
-
 	int i, j, k, l, m, n;
 	// move children to the right to make space for new child
 	for (i = parent_node->child_num; i > child_index+1; i--) {
@@ -176,7 +174,7 @@ int split_page(char *parent_node_path, int child_index) {
 	// move middle child compare element into the parent compare
 	node_t *child_node = read_node(parent_node->children[child_index]);
 	memcpy(parent_node->compare[child_index], child_node->compare[child_node->fanout/2], sizeof(char)*1024);
-
+	
 	// make new child
 	int new_child_id = get_id();
 	char *new_child_path = create_new_path(new_child_id);
@@ -223,6 +221,7 @@ int split_page(char *parent_node_path, int child_index) {
 	memcpy(child_node->right_sibling, new_child_node->filepath, sizeof(char)*1024);
 	memcpy(new_child_node->left_sibling, child_node->filepath, sizeof(char)*1024);
 
+
 	write_node(parent_node, parent_node->filepath);
 	write_node(child_node, child_node->filepath);
 	write_node(new_child_node, new_child_node->filepath);
@@ -243,8 +242,10 @@ int split_page(char *parent_node_path, int child_index) {
 
 char* split_root(char *root_path) {
 	int i,j,k,l;
-
+	
 	node_t *root = read_node(root_path);
+
+
 	// Create new root node
 	int new_root_id = get_id();
 	char* new_root_filepath = malloc(sizeof(char)*FILENAME_LENGTH);
@@ -312,6 +313,7 @@ char* split_root(char *root_path) {
 	memcpy(new_root_child->right_sibling, root->right_sibling, sizeof(char)*1024);
 	memcpy(root->right_sibling, new_root_child->filepath, sizeof(char)*1024);
 	memcpy(new_root_child->left_sibling, root->filepath, sizeof(char)*1024);
+
 
 	write_node(new_root_node, new_root_node->filepath);
 	write_node(root, root->filepath);
