@@ -1,4 +1,5 @@
 #include "../Data_models/node.h"
+#include <sys/times.h>
 
 bool searchNodeForState(node_t* node, char* match_string);
 bool searchNodeForLocationId(node_t* node, int key);
@@ -6,7 +7,7 @@ char* find_location_edge(char* node_path, char* match_string, int min, int max);
 char* find_user_edge(char *node_path, int key, int min, int max);
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
+	if (argc != 3) {
 		fprintf(stderr, "Usage: root node file path pls\n");
 		exit(0);
 	}
@@ -14,12 +15,17 @@ int main(int argc, char** argv) {
 	int matching_records = 0;
 	char* match_string = "Nebraska";
 
-	// TODO timing functions
+		struct timeval time_start, time_end;
 
-	node_t* root = read_node(argv[1]);
+	// start time
+	gettimeofday(&time_start, NULL);
 
-	char* left_edge = find_location_edge(root->filepath, match_string, 0, root->child_num-2);
+	node_t* location_root = read_node(argv[1]);
+	node_t* user_root = read_node(argv[2]);
+
+	char* left_edge = find_location_edge(location_root->filepath, match_string, 0, location_root->child_num-2);
 	node_t* left_edge_node = read_node(left_edge);
+	print_node(left_edge_node);
 	bool isNebraska = true;
 
 	while (isNebraska) {
@@ -28,8 +34,26 @@ int main(int argc, char** argv) {
 			FILE *infile = fopen(left_edge_node->compare[i], "rb");
 			location_t* location = read_location(infile);
 			if (strcmp(location->state, match_string) == 0) {
-
-				printf("%s, %s\n", location->city, location->state);
+				//printf("%s, %s\n", location->city, location->state);
+				char* left_user_edge = find_user_edge(user_root->filepath, location->locationID, 0, user_root->child_num-2);
+				node_t* left_user_edge_node = read_node(left_user_edge);
+				bool isLocationID = true;
+				while(isLocationID) {
+					int j;
+					for(j = 0; j < left_user_edge_node->child_num-1; j++) {
+						FILE *infile_2 = fopen(left_user_edge_node->compare[j], "rb");
+						user_t* user = read_user(infile_2);
+						if(user->locationID == location->locationID) {
+							matching_records++;
+						}
+					}
+					if(strcmp(left_user_edge_node->right_sibling, "") == 0) {
+						break;
+					} else {
+						left_user_edge_node = read_node(left_user_edge_node->right_sibling);
+					}
+					isLocationID = searchNodeForLocationId(left_user_edge_node, location->locationID);
+				}
 			}
 			fclose(infile);
 			free_location(location);
@@ -41,8 +65,14 @@ int main(int argc, char** argv) {
 		}
 		isNebraska = searchNodeForState(left_edge_node, match_string);
 	}
-    
+
    	printf("\n\nMatching Records %i\n", matching_records);
+
+		// end timei
+	gettimeofday(&time_end, NULL);
+
+	float totaltime = (time_end.tv_sec - time_start.tv_sec)
+	+ (time_end.tv_usec - time_start.tv_usec) / 1000000.0f;
 
 }
 
