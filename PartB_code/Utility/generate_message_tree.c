@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
 char* create_new_path(int child_id) {
 	char *filepath = malloc(sizeof(char)*1024);
-	sprintf(filepath, "../../Data/User_Tree/node_%06d.dat", child_id);
+	sprintf(filepath, "../../Data/Message_Tree/node_%06d.dat", child_id);
 	return filepath;
 }
 
@@ -244,7 +244,7 @@ char* split_root(char *root_path) {
 	// Create new root node
 	int new_root_id = get_id();
 	char* new_root_filepath = malloc(sizeof(char)*FILENAME_LENGTH);
-	sprintf(new_root_filepath, "../../Data/User_Tree/node_%06d_root.dat", new_root_id);
+	sprintf(new_root_filepath, "../../Data/Message_Tree/node_%06d_root.dat", new_root_id);
 
 	char *temp_root = malloc(sizeof(char)*1024);
 	sprintf(temp_root, "%s", new_root_filepath);
@@ -330,17 +330,17 @@ int cmp(message_t *message_1, message_t *message_2) {
 	long minutes1, minutes2;
 	
 	switch(compare_option) {
-	    case 0 :
-	      minutes1 = (message_1->year * 525949) + (message_1->month * 43829) + (message_1->day * 1440) + (message_1->hour * 60) + message_1->minute;
-	      minutes2 = (message_2->year * 525949) + (message_2->month * 43829) + (message_2->day * 1440) + (message_2->hour * 60) + message_2->minute;
-	      return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
+		case 0 :
+			minutes1 = (message_1->year * 525949) + (message_1->month * 43829) + (message_1->day * 1440) + (message_1->hour * 60) + message_1->minute;
+			minutes2 = (message_2->year * 525949) + (message_2->month * 43829) + (message_2->day * 1440) + (message_2->hour * 60) + message_2->minute;
+			return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
 	    
 		case 1 :
-	      minutes1 = (message_1->hour * 60) + message_1->minute;
-	      minutes2 = (message_2->hour * 60) + message_2->minute;
-	      return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
+			minutes1 = (message_1->hour * 60) + message_1->minute;
+			minutes2 = (message_2->hour * 60) + message_2->minute;
+			return minutes1 > minutes2 ? 1:( minutes1 < minutes2 ? -1:0 );
 
-	    case 2 : return (message_1->messageID)>(message_2->messageID)? 1:( (message_1->messageID)<(message_2->messageID) ? -1:0 );
+		case 2 : return (message_1->messageID)>(message_2->messageID)? 1:( (message_1->messageID)<(message_2->messageID) ? -1:0 );
 	    
 		case 3 : return (message_1->userID)>(message_2->userID)? 1:( (message_1->userID)<(message_2->userID) ? -1:0 );
 	}
